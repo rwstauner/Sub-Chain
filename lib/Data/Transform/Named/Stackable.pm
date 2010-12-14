@@ -106,4 +106,17 @@ sub push {
 	}
 }
 
+=method stack
+
+	$stack->stack($field);
+
+Return the L<Data::Transform::Stackable> object for the given field name.
+
+=cut
+
+sub stack {
+	my ($self, $name) = @_;
+	return $self->{fields}{$name};
+}
+
 1;
