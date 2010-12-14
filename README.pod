@@ -1,0 +1,19 @@
+=head1 Data::Transform::Named
+
+A simple, named interface to L<Data::Transform>.
+
+Create a collection of named functions
+to apply to a stack of named parameters
+for easily configurable transformation of data.
+
+	my $named = Data::Trasnform::Named->new;
+	$named->add(chew => sub {});
+
+	my $stack = $named->stackable;
+	$stack->push('chew', fields => 'address');
+
+	my $hash = $stack->transform({name => 'John', address => '123 Street Road'});
+
+See module POD for more information.
+
+=cut
