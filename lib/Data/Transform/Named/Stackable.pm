@@ -19,6 +19,8 @@ use Carp qw(croak cluck);
 use Data::Transform 0.06;
 use Data::Transform::Stackable;
 
+use Data::Transform::Named;
+
 # TODO: all-others group? (all the fields that haven't been done so far)
 
 =method new
@@ -97,7 +99,7 @@ sub push {
 		($collection->{$name} ||=
 			Data::Transform::Stackable->new())
 		->push(
-			$self->{named}->tr($tr, @args)
+			$self->{named}->transform($tr, @args)
 		);
 	}
 }

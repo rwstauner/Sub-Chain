@@ -9,6 +9,7 @@ package Data::Transform::Named;
 
 use strict;
 use warnings;
+use Carp qw(croak cluck);
 
 =method new
 
@@ -95,6 +96,27 @@ sub stackable {
 	my ($self) = @_;
 	return _require('Data::Transform::Named::Stackable')->new(
 		named => $self
+	);
+}
+
+=method transform
+
+	$named->transform('name', @arguments);
+	$named->transform('match', 'yay', 'boo');
+
+Return a sub ready for inclusion in the stack.
+Returns a L<Data::Transform::Map> with a I<Code>
+parameter of the named sub called with the provided arguments.
+
+=cut
+
+sub transform {
+	my ($self, $name, @args) = @_;
+	my $sub = $self->{named}->{$name}
+		or croak("Unknown Transform name: '$name'");
+
+	return Data::Transform::Map->new(
+		Code => sub { $sub->($_[0], @args); }
 	);
 }
 
