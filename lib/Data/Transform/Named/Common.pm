@@ -32,8 +32,6 @@ sub exchange {
 
 	gsub($str, qr/pattern/, "replacement $1");
 
-See L<String::Gsub::Functions/gsub>.
-
 =cut
 
 # considered String::Gsub but it failed to install
