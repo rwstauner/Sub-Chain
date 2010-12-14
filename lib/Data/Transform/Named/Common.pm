@@ -3,6 +3,12 @@ package Data::Transform::Named::Common;
 
 =head1 SYNOPSIS
 
+	# get a hashref of subs defined here:
+	Data::Transform::Named::Common->_all();
+
+These functions are designed for use by
+L<Data::Transform::Named>.
+
 =cut
 
 use strict;
