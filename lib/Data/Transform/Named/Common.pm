@@ -28,10 +28,13 @@ sub _all {
 	my $class = @_ ? (ref($_[0]) || $_[0]) : __PACKAGE__;
 	no strict 'refs';
 	my (%ns, %subs) = %{"${class}::"};
-	# lowercase-only names (not with leading underscore) that are subs
-	my @keys = grep { *{"${class}::$_"}{CODE} }
-		grep { /^[a-z][a-z_]+$/ } keys(%ns);
-	@subs{@keys} = @ns{@keys};
+	my $coderef;
+	while( my ($name, $sub) = each %ns ){
+		# lowercase-only names (not with leading underscore) that are subs
+		next unless $name =~ /^[a-z][a-z_]+$/;
+		$subs{$name} = $coderef
+			if $coderef = *{"${class}::${name}"}{CODE};
+	}
 	return \%subs;
 }
 
