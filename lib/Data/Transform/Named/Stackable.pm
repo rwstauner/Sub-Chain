@@ -119,4 +119,76 @@ sub stack {
 	return $self->{fields}{$name};
 }
 
+=method transform
+
+	my $values = $stack->tramsform({key => 'value', ...});
+	my $values = $stack->tramsform([qw(fields)], [qw(values)]);
+	my $value  = $stack->transform('address', '123 Street Road');
+
+Apply the stack of transformations to the supplied data.
+
+If a sole hashref is supplied
+it will be looped over
+and a hashref of transformed data will be returned.
+For example:
+
+	# for use with DBI
+	$sth->execute;
+	while( my $hash = $sth->fetchrow_hashref() ){
+		my $tr_hash = $stack->transform($hash);
+	}
+
+If two arrayrefs are supplied,
+the first should be a list of column names,
+and the second the corresponding data.
+For example:
+
+	# for use with Text::CSV
+	my $header = $csv->getline($io);
+	while( my $array = $csv->getline() ){
+		my $tr_array = $stack->transform($header, $array);
+	}
+
+If two arguments are given,
+and the first is a string,
+it should be the field name,
+and the second argument the data.
+The return value will be the data after it has been
+passed through the stack of transformations.
+
+	# simple data
+	my $trimmed = $stack->transform('trim', '  lots of space   ');
+
+=cut
+
+sub transform {
+	my ($self) = shift;
+
+	my $out;
+	# Data::Transform::get expects and returns an arrayref
+	my $get = sub { @{ $self->stack($_[0])->get([$_[1]]) }[0] };
+
+	if( ref $_[0] eq 'HASH' ){
+		my %in = %{$_[0]};
+		$out = {};
+		while( my ($key, $value) = each %in ){
+			$out->{$key} = $get->($key, $value);
+		}
+	}
+	elsif( ref $_[0] eq 'ARRAY' ){
+		my @columns = @{$_[0]};
+		my @data    = @{$_[1]};
+		$out = [];
+		foreach my $i ( 0 .. $#columns ){
+			CORE::push(@$out, $get->($columns[$i], $data[$i]));
+		}
+	}
+	else {
+		$out = $get->($_[0], $_[1]);
+	}
+
+	return $out;
+}
+# TODO: alias to 'get'?  Is it too different?
+
 1;
