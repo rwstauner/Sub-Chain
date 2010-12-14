@@ -71,9 +71,9 @@ sub push {
 	$names = [$names]
 		if ! ref $names;
 
-	my $collection = $type . 's';
-	croak("'$type' unrecognized")
-		unless $collection = $self->{$collection};
+	# accept singular or plural... we want the plural
+	my ($collection) = ("${type}s" =~ /(fields|groups)/)
+		or croak("'$type' invalid; Must be field(s) or group(s)");
 
 	foreach my $name ( @names ){
 		($collection->{$name} ||=
