@@ -52,6 +52,24 @@ sub new {
 	bless $self, $class;
 }
 
+=method group
+
+	$stack->group(groupname => [qw(fields)]);
+
+Append fields to the specified group name.
+
+=cut
+
+sub group {
+	my ($self) = shift;
+	my %groups = ref $_[0] ? %{$_[0]} : @_;
+	while( my ($group, $fields) = each %groups ){
+		$fields = [$fields]
+			unless ref $fields;
+		push(@{ $self->{groups}->{$group} ||= [] }, @$fields);
+	}
+}
+
 =method push
 
 	$stack->push($name,   $type, [qw(fields)], @arguments);
