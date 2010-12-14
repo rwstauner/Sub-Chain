@@ -62,14 +62,21 @@ L<Data::Transform::Named::Common>.
 sub add_common {
 	my ($self) = @_;
 
-	my $common = 'Data::Transform::Named::Common';
-	eval "require $common";
-	die $@ if $@;
-
-	$self->add($common->_all());
+	$self->add(_require('Data::Transform::Named::Common')->_all());
 
 	# chainable
 	return $self;
 }
 
+# convenience method for lazy loading the module
+# and returning the package name string so you can chain it
+sub _require {
+	my ($mod) = @_;
+	eval "require $mod";
+	die $@ if $@;
+	return $mod;
+}
+
 1;
+
+=for Pod::Coverage _require
