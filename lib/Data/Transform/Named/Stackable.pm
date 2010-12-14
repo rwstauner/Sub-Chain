@@ -95,7 +95,9 @@ sub push {
 	my ($collection) = ("${type}s" =~ /(fields|groups)/)
 		or croak("'$type' invalid; Must be field(s) or group(s)");
 
-	foreach my $name ( @names ){
+	$collection = $self->{$type};
+
+	foreach my $name ( @$names ){
 		($collection->{$name} ||=
 			Data::Transform::Stackable->new())
 		->push(
