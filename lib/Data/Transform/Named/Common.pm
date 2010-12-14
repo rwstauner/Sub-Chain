@@ -48,7 +48,7 @@ A fallback value can be specified if
 sub exchange {
 	my ($data, $exchanges, $fallback) = @_;
 	return exists $exchanges->{$data}
-		? $exchanges->{data}
+		? $exchanges->{$data}
 		: $fallback;
 }
 
