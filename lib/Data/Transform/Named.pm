@@ -77,6 +77,27 @@ sub _require {
 	return $mod;
 }
 
+=method stackable
+
+	$stack = $named->stackable();
+
+Sends $self as the I<named> parameter to
+L<Data::Transform::Named::Stackable/new>.
+
+It's a convenience shortcut for:
+
+	$named = Data::Transform::Named->new() ...
+	$stack = Data::Transform::Named::Stackable->new(named => $named);
+
+=cut
+
+sub stackable {
+	my ($self) = @_;
+	return _require('Data::Transform::Named::Stackable')->new(
+		named => $self
+	);
+}
+
 1;
 
 =for Pod::Coverage _require
