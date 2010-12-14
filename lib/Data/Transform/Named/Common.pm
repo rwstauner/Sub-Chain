@@ -10,22 +10,6 @@ use warnings;
 
 # TODO: skip
 
-=func date
-
-Convert string to a date using provided format (default).
-
-=cut
-
-use DateTime ();
-
-sub date {
-	my ($data, $format, $parser) = @_;
-	die("interface not defined!");
-	$format ||= '%Y-%m-%d %H:%M:%S';
-	#$parser = DateTime::Format::Strptime->new(pattern => $parser)
-		#unless ref $parser;
-	return $parser->parse_datetime($data)->strftime($format);
-}
 
 =func exchange
 
