@@ -10,6 +10,24 @@ use warnings;
 
 # TODO: skip
 
+=method _all
+
+Return a hashref of the functions of this module.
+This is used in L<Data::Transform::Named/add_common>
+to add all the utility functions from this package.
+
+=cut
+
+sub _all {
+	my $class = @_ ? (ref($_[0]) || $_[0]) : __PACKAGE__;
+	no strict 'refs';
+	my (%ns, %subs) = %{"${class}::"};
+	# lowercase-only names (not with leading underscore) that are subs
+	my @keys = grep { *{"${class}::$_"}{CODE} }
+		grep { /^[a-z][a-z_]+$/ } keys(%ns);
+	@subs{@keys} = @ns{@keys};
+	return \%subs;
+}
 
 =func exchange
 

@@ -35,9 +35,12 @@ sub add {
 
 sub add_common {
 	my ($self) = @_;
-	require Data::Transform::Named::Common;
-	# lowercase-only names are the subs we're looking for
-	$self->add(grep { /^[a-z]+$/ } %Data::Transform::Named::Common::);
+
+	my $common = 'Data::Transform::Named::Common';
+	eval "require $common";
+	die $@ if $@;
+
+	$self->add($common->_all());
 
 	# chainable
 	return $self;
