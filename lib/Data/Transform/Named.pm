@@ -10,6 +10,17 @@ package Data::Transform::Named;
 use strict;
 use warnings;
 
+=method new
+
+	my $named = Data::Transform::Named->new(
+		action => sub {},
+	)->add_common;
+
+Instantiate a collection of named functions.
+A hash[ref] of named functions can be passed.
+
+=cut
+
 sub new {
 	my $class = shift;
 	my $self = {};
@@ -22,6 +33,14 @@ sub new {
 	return $self;
 }
 
+=method add
+
+	$named->add('goober' => \&peant_butter);
+
+Add a named function to the collection.
+
+=cut
+
 sub add {
 	my ($self) = shift;
 	my %subs = ref $_[0] ? %{$_[0]} : @_;
@@ -32,6 +51,13 @@ sub add {
 	# chainable
 	return $self;
 }
+
+=method add_common
+
+Load all the functions from
+L<Data::Transform::Named::Common>.
+
+=cut
 
 sub add_common {
 	my ($self) = @_;

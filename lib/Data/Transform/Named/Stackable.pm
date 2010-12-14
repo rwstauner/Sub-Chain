@@ -7,13 +7,38 @@ package Data::Transform::Named::Stackable;
 
 	$stack->push('trim', fields => [qw(name address)]);
 
+	$stack->group(fruits => [qw(apple orange banana)]);
+	$stack->push('trim', groups => 'fruits');
+
 =cut
 
 use strict;
 use warnings;
 use Carp qw(croak cluck);
+
 use Data::Transform 0.06;
 use Data::Transform::Stackable;
+
+# TODO: all-others group? (all the fields that haven't been done so far)
+
+=method new
+
+	# use the default functions from Data::Transform::Named::Common
+	Data::Transform::Named::Stackable->new();
+
+	# or define your own set of functions:
+	my $named = Data::Transform::Named->new()->add(
+		something => sub {}
+	);
+
+	my $stack = Data::Transform::Named::Stackable->new(named => $named);
+	# or
+	my $stack = $named->stackable()
+
+If you're creating your own collection of named functions,
+it may be easier to use L<Data::Transform::Named/stackable>.
+
+=cut
 
 sub new {
 	my $class = shift;
@@ -26,6 +51,18 @@ sub new {
 
 	bless $self, $class;
 }
+
+=method push
+
+	$stack->push($name,   $type, [qw(fields)], @arguments);
+	$stack->push('trim',  fields => [qw(fld1 fld2)]);
+	$stack->push('match', 'groups', 'group1', "matched", "not matched");
+
+Push a named transformation onto the stack
+for the specified fields or groups
+and pass the supplied arguments.
+
+=cut
 
 sub push {
 	my ($self, $tr, $type, $names, @args) = @_;
