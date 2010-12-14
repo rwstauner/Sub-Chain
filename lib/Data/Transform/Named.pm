@@ -122,4 +122,6 @@ sub transform {
 
 1;
 
+=for stopwords stackable
+
 =for Pod::Coverage _require

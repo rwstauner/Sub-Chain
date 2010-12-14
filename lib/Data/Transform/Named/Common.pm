@@ -122,7 +122,7 @@ sub remove_non_printing {
 
 	squeeze($str);
 
-Squeeze all occurances of one or more whitespace characters
+Squeeze all occurrences of one or more whitespace characters
 into a single space character (C<\x20>).
 
 =cut
@@ -148,3 +148,5 @@ sub trim {
 }
 
 1;
+
+=for stopwords gsub

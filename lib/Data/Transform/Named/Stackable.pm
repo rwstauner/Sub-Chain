@@ -127,9 +127,9 @@ sub stack {
 
 Apply the stack of transformations to the supplied data.
 
-If a sole hashref is supplied
+If a sole hash ref is supplied
 it will be looped over
-and a hashref of transformed data will be returned.
+and a hash ref of transformed data will be returned.
 For example:
 
 	# for use with DBI
@@ -138,7 +138,7 @@ For example:
 		my $tr_hash = $stack->transform($hash);
 	}
 
-If two arrayrefs are supplied,
+If two array refs are supplied,
 the first should be a list of column names,
 and the second the corresponding data.
 For example:
