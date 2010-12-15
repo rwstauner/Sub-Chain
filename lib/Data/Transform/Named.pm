@@ -115,7 +115,7 @@ sub transform {
 	my $sub = $self->{named}->{$name}
 		or croak("Unknown Transform name: '$name'");
 
-	return Data::Transform::Map->new(
+	return _require('Data::Transform::Map')->new(
 		Code => sub { $sub->($_[0], @args); }
 	);
 }
