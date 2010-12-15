@@ -35,15 +35,20 @@ my %tests = (
 	],
 );
 
-plan tests => (map { keys %{$$_[1]} } map { @$_ } values(%tests)) + 1 + 2; # function tests + require + _all()
+plan tests => (map { keys %{$$_[1]} } map { @$_ } values(%tests)) + 2 + 4; # function tests + require + _all()
 
 my $mod = 'Data::Transform::Named::Common';
 require_ok($mod);
+my $nmod = 'Data::Transform::Named';
+require_ok($nmod);
 
 my $all = $mod->_all;
 
-ok((grep { ref $_ eq 'CODE' } values %$all) == keys(%$all), 'all coderefs');
-is_deeply([sort keys %tests], [sort keys %$all], 'all functions expected/tested');
+# test the return of _all(), and the Named->add_common (which should be the same)
+foreach my $set ( $all, $nmod->new->add_common->{named} ){
+	ok((grep { ref $_ eq 'CODE' } values %$set) == keys(%$set), 'all coderefs');
+	is_deeply([sort keys %tests], [sort keys %$set], 'all functions expected/tested');
+}
 
 while( my ($name, $tests) = each %tests ){
 	foreach my $test ( @$tests ){
