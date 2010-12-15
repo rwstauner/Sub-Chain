@@ -154,7 +154,10 @@ sub stack {
 	$self->dequeue
 		if $self->{queue};
 
-	return $self->{fields}{$name};
+	croak("No transformations specified for '$name'")
+		unless my $stack = $self->{fields}{$name};
+
+	return $stack;
 }
 
 =method transform
