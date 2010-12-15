@@ -44,7 +44,8 @@ it may be easier to use L<Data::Transform::Named/stackable>.
 
 sub new {
 	my $class = shift;
-	my $named = $_[0] || Data::Transform::Named->new->add_common;
+	my %opts = ref $_[0] ? %{$_[0]} : @_;
+	my $named = delete $opts{named} || Data::Transform::Named->new->add_common;
 	my $self = {
 		named  => $named,
 		fields => {},
