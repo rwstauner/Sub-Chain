@@ -50,9 +50,48 @@ sub new {
 		named  => $named,
 		fields => {},
 		groups => {},
+		queue  => [],
 	};
 
 	bless $self, $class;
+}
+
+=method dequeue
+
+Process the queue of group and field specifications.
+
+Queuing (and dequeuing) allows you to specify a transformation
+for a group before you specify what fields belong in that group.
+
+This method is called when another method needs something
+from the stack and there are still specifications in the queue
+(L</stack> and L</transform>, for instance).
+
+=cut
+
+sub dequeue {
+	my ($self) = @_;
+
+	# shift items off the queue until they've all been processed
+	return unless my $queue = $self->{queue};
+	while( my $item = shift @$queue ){
+		my ($tr, $type, $names, $args) = @$item;
+
+		# flatten to a single list of fields
+		my $fields = $type eq 'groups'
+			? [map { @{ $self->{groups}{$_} } } @$names]
+			: $names;
+
+		# create a single instance of the sub
+		# and copy its reference to the various stacks
+		my $map = $self->{named}->transform($tr, @$args);
+		foreach my $field ( @$fields ){
+			( $self->{fields}->{$field} ||=
+				Data::Transform::Stackable->new() )->push( $map );
+		}
+	}
+	# let 'queue' return false so we can do simple if queue checks
+	delete $self->{queue};
 }
 
 =method group
@@ -93,18 +132,12 @@ sub push {
 		if ! ref $names;
 
 	# accept singular or plural... we want the plural
-	my ($collection) = ("${type}s" =~ /(fields|groups)/)
-		or croak("'$type' invalid; Must be field(s) or group(s)");
+	$type =~ s/^(field|group).*$/$1s/
+		or croak("'$type' invalid: Must be field(s) or group(s)");
 
-	$collection = $self->{$type};
+	push(@{ $self->{queue} ||= [] }, [$tr, $type, $names, \@args]);
 
-	foreach my $name ( @$names ){
-		($collection->{$name} ||=
-			Data::Transform::Stackable->new())
-		->push(
-			$self->{named}->transform($tr, @args)
-		);
-	}
+	return $self;
 }
 
 =method stack
@@ -117,6 +150,10 @@ Return the L<Data::Transform::Stackable> object for the given field name.
 
 sub stack {
 	my ($self, $name) = @_;
+
+	$self->dequeue
+		if $self->{queue};
+
 	return $self->{fields}{$name};
 }
 
@@ -164,6 +201,9 @@ passed through the stack of transformations.
 
 sub transform {
 	my ($self) = shift;
+
+	$self->dequeue
+		if $self->{queue};
 
 	my $out;
 	# Data::Transform::get expects and returns an arrayref
