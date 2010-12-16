@@ -72,9 +72,14 @@ from the stack and there are still specifications in the queue
 sub dequeue {
 	my ($self) = @_;
 
-	# shift items off the queue until they've all been processed
 	return unless my $queue = $self->{queue};
+	my $dequeued = ($self->{dequeued} ||= []);
+
+	# shift items off the queue until they've all been processed
 	while( my $item = shift @$queue ){
+		# save this item in case we need to reprocess the whole queue later
+		push(@$dequeued, $item);
+
 		my ($tr, $type, $names, $args) = @$item;
 
 		# flatten to a single list of fields
@@ -110,6 +115,8 @@ sub group {
 			unless ref $fields;
 		push(@{ $self->{groups}->{$group} ||= [] }, @$fields);
 	}
+	$self->reprocess_queue
+		if $self->{dequeued};
 }
 
 =method push
@@ -138,6 +145,16 @@ sub push {
 	push(@{ $self->{queue} ||= [] }, [$tr, $type, $names, \@args]);
 
 	return $self;
+}
+
+sub reprocess_queue {
+	my ($self) = @_;
+	return unless my $dequeued = delete $self->{dequeued};
+
+	# reset the queue and the stacks so that it will all be rebuilt
+	$self->{queue}  = [@$dequeued, @{ $self->{queue} || [] } ];
+	$self->{fields} = {};
+	# but don't actually rebuild it until necessary
 }
 
 =method stack
