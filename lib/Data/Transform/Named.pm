@@ -9,7 +9,7 @@ package Data::Transform::Named;
 
 use strict;
 use warnings;
-use Carp qw(croak cluck);
+use Carp qw(croak);
 
 =method new
 

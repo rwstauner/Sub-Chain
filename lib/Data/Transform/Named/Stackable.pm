@@ -14,7 +14,7 @@ package Data::Transform::Named::Stackable;
 
 use strict;
 use warnings;
-use Carp qw(croak cluck);
+use Carp qw(croak carp);
 
 use Data::Transform 0.06;
 use Data::Transform::Stackable;
