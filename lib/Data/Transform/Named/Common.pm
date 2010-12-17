@@ -79,6 +79,26 @@ sub gsub {
 	return $data;
 }
 
+=func lc
+
+The same as L<CORE::lc|perlfunc/lc>.
+
+=cut
+
+sub lc {
+	CORE::lc($_[0]);
+}
+
+=func lcfirst
+
+The same as L<CORE::lcfirst|perlfunc/lcfirst>.
+
+=cut
+
+sub lcfirst {
+	CORE::lcfirst($_[0]);
+}
+
 =func match
 
 	match($str, $regexp, 'yes', 'no');
@@ -162,6 +182,28 @@ sub trim {
 	my ($data) = @_;
 	$data =~ s/(^\s+|\s+$)//g;
 	return $data;
+}
+
+# include some CORE functions:
+
+=func uc
+
+The same as L<CORE::uc|perlfunc/uc>.
+
+=cut
+
+sub uc {
+	CORE::uc($_[0]);
+}
+
+=func ucfirst
+
+The same as L<CORE::ucfirst|perlfunc/ucfirst>.
+
+=cut
+
+sub ucfirst {
+	CORE::ucfirst($_[0]);
 }
 
 1;

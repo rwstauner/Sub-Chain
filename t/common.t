@@ -39,6 +39,18 @@ my %tests = (
 	trim => [
 		[ [], {'  arr  ' => 'arr', "\ttab" => 'tab', "t\tab" => "t\tab", "t2\t " => 't2'}]
 	],
+	'lc' => [
+		[ [], {'lc' => 'lc', 'Lc' => 'lc', 'LC' => 'lc'}]
+	],
+	'lcfirst' => [
+		[ [], {'lc' => 'lc', 'Lc' => 'lc', 'LC' => 'lC'}]
+	],
+	'uc' => [
+		[ [], {'uc' => 'UC', 'Uc' => 'UC', 'UC' => 'UC'}]
+	],
+	'ucfirst' => [
+		[ [], {'uc' => 'Uc', 'Uc' => 'Uc', 'UC' => 'UC'}]
+	],
 );
 
 plan tests => (map { keys %{$$_[1]} } map { @$_ } values(%tests)) + 2 + 4; # function tests + require + _all()
