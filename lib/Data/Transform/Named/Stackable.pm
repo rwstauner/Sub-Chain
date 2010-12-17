@@ -60,7 +60,7 @@ sub new {
 
 Process the queue of group and field specifications.
 
-Queuing (and dequeuing) allows you to specify a transformation
+Queuing allows you to specify a transformation
 for a group before you specify what fields belong in that group.
 
 This method is called when another method needs something
