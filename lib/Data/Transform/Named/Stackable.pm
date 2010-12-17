@@ -207,13 +207,13 @@ For example:
 	}
 
 If two array refs are supplied,
-the first should be a list of column names,
+the first should be a list of field names,
 and the second the corresponding data.
 For example:
 
 	# for use with Text::CSV
 	my $header = $csv->getline($io);
-	while( my $array = $csv->getline() ){
+	while( my $array = $csv->getline($io) ){
 		my $tr_array = $stack->transform($header, $array);
 	}
 
