@@ -147,6 +147,16 @@ sub push {
 	return $self;
 }
 
+=method reprocess_queue
+
+Force the queue of transformation specifications
+to be completely reprocessed.
+
+This gets called automatically when groups are changed
+after the queue was initially processed.
+
+=cut
+
 sub reprocess_queue {
 	my ($self) = @_;
 	return unless my $dequeued = delete $self->{dequeued};
