@@ -81,19 +81,36 @@ sub gsub {
 
 =func match
 
-	match($str, qr/regexp/);
-	match($str, qr/regexp/, "yes", "no");
+	match($str, $regexp, 'yes', 'no');
+	match($str, $regexp);
 
 Match string against pattern.
-Returns true or false (perl's C<1> or C<''>).
-Alternate True and False values can be supplied.
+Optional arguments are values to return
+upon success or failure, respectively.
+
+If alternate true/false values are not supplied (only 2 arguments)
+then the return value will be similar to the result of the m// operator:
+On success, either the value of C<$1> if there was a group captured,
+or a C<1> if there were no parentheses.
+If the string does not match, perl's false value will be returned (C<''>).
+
+	match('str',  't' ); # returns 1
+	match('str', '(t)'); # returns 't'
+	match('str', '(e)'); # returns ''
 
 =cut
 
 sub match {
-	my ($data, $regexp) = (shift, shift);
-	my ($true, $false)  = (@_ ? @_ : (1, ''));
-	return ($data =~ /$regexp/ ? $true : $false);
+	my ($data, $regexp, @truefalse) = @_;
+	# $1 if it was captured, otherwise a true value (empty on failure)
+	my @match = ($data =~ /$regexp/);
+
+	# if true/false values were supplied
+	return scalar @truefalse
+		# return first on success, second on failure
+		? ($truefalse[ @match ? 0 : 1 ])
+		# else, return the value from m/// (but prefer '' to undef)
+		: (@match ? $match[0] : '');
 }
 
 # TODO; make this less arbitrary?
