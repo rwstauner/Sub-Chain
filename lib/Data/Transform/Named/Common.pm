@@ -18,22 +18,32 @@ use warnings;
 
 =method _all
 
+	Data::Transform::Named::Common->_all();
+	Data::Transform::Named::Common->_all(qw(match gsub));
+
 Return a hashref of the functions of this module.
 This is used in L<Data::Transform::Named/add_common>
 to add all the utility functions from this package.
 
+An optional list of names can be supplied
+to limit the returned hashref (instead of actually providing B<all>).
+
 =cut
 
 sub _all {
-	my $class = @_ ? (ref($_[0]) || $_[0]) : __PACKAGE__;
+	my ($self, @subs) = @_;
+	my $class = $self ? (ref($self) || $self) : __PACKAGE__;
 	no strict 'refs';
 	my (%ns, %subs) = %{"${class}::"};
-	my $coderef;
-	while( my ($name, $sub) = each %ns ){
+	# if no subs were listed, use all
+	@subs = keys %ns
+		if !@subs;
+	foreach my $name ( @subs ){
 		# lowercase-only names (not with leading underscore) that are subs
 		next unless $name =~ /^[a-z][a-z_]+$/;
-		$subs{$name} = $coderef
-			if $coderef = *{"${class}::${name}"}{CODE};
+		if( my $coderef = *{"${class}::${name}"}{CODE} ){
+			$subs{$name} = $coderef;
+		}
 	}
 	return \%subs;
 }

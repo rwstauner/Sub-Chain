@@ -53,20 +53,30 @@ my %tests = (
 	],
 );
 
-plan tests => (map { keys %{$$_[1]} } map { @$_ } values(%tests)) + 2 + 4; # function tests + require + _all()
-
 my $mod = 'Data::Transform::Named::Common';
-require_ok($mod);
 my $nmod = 'Data::Transform::Named';
+
+my @test_all = (
+	sub { ($mod->_all, [keys %tests]) },
+	sub { ($nmod->new->add_common->{named}, [keys %tests]) },
+);
+foreach my $list ( [qw(squeeze trim)], [qw(lc uc lcfirst ucfirst)], [qw(match)] ){
+	push(@test_all, sub { ($mod->_all(@$list), [@$list]) });
+}
+
+plan tests => (map { keys %{$$_[1]} } map { @$_ } values(%tests)) + 2 + (2 * @test_all); # function tests + require + _all()
+
+require_ok($mod);
 require_ok($nmod);
 
-my $all = $mod->_all;
-
 # test the return of _all(), and the Named->add_common (which should be the same)
-foreach my $set ( $all, $nmod->new->add_common->{named} ){
+foreach my $sub ( @test_all ){
+	my ($set, $exp) = $sub->();
 	ok((grep { ref $_ eq 'CODE' } values %$set) == keys(%$set), 'all coderefs');
-	is_deeply([sort keys %tests], [sort keys %$set], 'all functions expected/tested');
+	is_deeply([sort @$exp], [sort keys %$set], 'all functions expected/tested');
 }
+
+my $all = $mod->_all;
 
 while( my ($name, $tests) = each %tests ){
 	foreach my $test ( @$tests ){
