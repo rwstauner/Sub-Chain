@@ -236,30 +236,39 @@ sub transform {
 		if $self->{queue};
 
 	my $out;
-	# Data::Transform::get expects and returns an arrayref
-	my $get = sub { @{ $self->stack($_[0])->get([$_[1]]) }[0] };
+	my $opts = {multi => 1};
+	my $ref = ref $_[0];
 
-	if( ref $_[0] eq 'HASH' ){
+	if( $ref eq 'HASH' ){
 		my %in = %{$_[0]};
 		$out = {};
 		while( my ($key, $value) = each %in ){
-			$out->{$key} = $get->($key, $value);
+			$out->{$key} = $self->_transform_one($key, $value, $opts);
 		}
 	}
-	elsif( ref $_[0] eq 'ARRAY' ){
-		my @columns = @{$_[0]};
-		my @data    = @{$_[1]};
+	elsif( $ref eq 'ARRAY' ){
+		my @fields = @{$_[0]};
+		my @data   = @{$_[1]};
 		$out = [];
-		foreach my $i ( 0 .. $#columns ){
-			CORE::push(@$out, $get->($columns[$i], $data[$i]));
+		foreach my $i ( 0 .. $#fields ){
+			CORE::push(@$out,
+				$self->_transform_one($fields[$i], $data[$i], $opts));
 		}
 	}
 	else {
-		$out = $get->($_[0], $_[1]);
+		$out = $self->_transform_one($_[0], $_[1]);
 	}
 
 	return $out;
 }
 # TODO: alias to 'get'?  Is it too different?
+
+sub _transform_one {
+	my ($self, $field, $value, $opts) = @_;
+	return $value
+		unless my $stack = $self->stack($field, $opts);
+	# Data::Transform::get expects and returns an arrayref
+	return @{ $stack->get([$value]) }[0];
+}
 
 1;
