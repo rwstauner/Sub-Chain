@@ -20,6 +20,10 @@ use Data::Transform 0.06;
 use Data::Transform::Stackable;
 
 use Data::Transform::Named;
+use Object::Enum 0.072 ();
+
+our $WarnNoField = Object::Enum->new({unset => 0, default => 'single',
+	values => [qw(never single always)]});
 
 # TODO: all-others group? (all the fields that haven't been done so far)
 
@@ -40,17 +44,52 @@ use Data::Transform::Named;
 If you're creating your own collection of named functions,
 it may be easier to use L<Data::Transform::Named/stackable>.
 
+Possible options:
+
+=begin :list
+
+* I<named>
+An instance of Data::Transform::Named.
+A default (with all the functions from L<Data::Transform::Named::Common>)
+will be created if not supplied.
+
+* I<warn_no_field>
+Whether or not to emit a warning if asked to transform a field
+but transformations were not specified for that field
+(specifically when L</stack> is called and no stack exists).
+Valid values are:
+
+=begin :list
+
+* C<never> - never warn
+
+* C<always> - always warn
+
+=item *
+
+C<single> - warn when called for a single transformation
+(but not when L</transform> is called with a hashref or arrayref).
+
+=end :list
+
+The default is C<single>.
+
+=end :list
+
 =cut
 
 sub new {
 	my $class = shift;
 	my %opts = ref $_[0] ? %{$_[0]} : @_;
+
 	my $named = delete $opts{named} || Data::Transform::Named->new->add_common;
 	my $self = {
 		named  => $named,
 		fields => {},
 		groups => {},
 		queue  => [],
+		warn_no_field =>
+			$WarnNoField->clone(delete $opts{warn_no_field} || 'single'),
 	};
 
 	bless $self, $class;
@@ -176,15 +215,21 @@ Return the L<Data::Transform::Stackable> object for the given field name.
 =cut
 
 sub stack {
-	my ($self, $name) = @_;
+	my ($self, $name, $opts) = @_;
+	$opts ||= {};
 
 	$self->dequeue
 		if $self->{queue};
 
-	croak("No transformations specified for '$name'")
-		unless my $stack = $self->{fields}{$name};
+	if( my $stack = $self->{fields}{$name} ){
+		return $stack;
+	}
 
-	return $stack;
+	carp("No transformations specified for '$name'")
+		if ($self->{warn_no_field}->is_always)
+			|| ($self->{warn_no_field}->is_single && !$opts->{multi});
+
+	return undef;
 }
 
 =method transform
