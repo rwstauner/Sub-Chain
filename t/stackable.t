@@ -92,4 +92,34 @@ is($filter, 'no-op|razzberry|', 'filter names');
 
 # transform() tested elsewhere
 
+SKIP: {
+	my $testwarn = 'Test::Warn';
+	eval "use $testwarn; 1";
+	skip "$testwarn required for testing warnings" if $@;
+
+	$stack->push('no-op', field => 'blue');
+	warning_is(sub { $stack->transform( 'blue',  'yellow' ) }, undef, 'no warning for specified field');
+	warning_is(sub { $stack->transform( 'green', 'orange' ) }, q/No transformations specified for 'green'/, 'warn single');
+	warning_is(sub { $stack->transform({'green', 'orange'}) }, undef, 'no warn multi');
+
+	no strict 'refs';
+	$stack->{warn_no_field} = ${"${mod}::WarnNoField"}->clone('always');
+	warning_is(sub { $stack->transform({'green', 'orange'}) }, q/No transformations specified for 'green'/, 'warn always');
+	$stack->{warn_no_field} = ${"${mod}::WarnNoField"}->clone('never');
+	warning_is(sub { $stack->transform( 'green', 'orange' ) }, undef, 'warn never');
+}
+
+SKIP: {
+	my $testex = 'Test::Exception';
+	eval "use $testex; 1";
+	skip "$testex required for testing exceptions" if $@;
+
+	foreach my $wnf ( qw(always single never) ){
+		my $stack;
+		lives_ok(sub { $stack = $mod->new(warn_no_field => $wnf) }, 'expected to live');
+		isa_ok($stack, $mod);
+	}
+	throws_ok(sub { $mod->new(warn_no_field => 'anything else') }, qr/cannot be set to/i, 'die with invalid value');
+}
+
 done_testing;
