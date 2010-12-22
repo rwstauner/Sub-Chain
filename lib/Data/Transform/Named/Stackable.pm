@@ -123,7 +123,7 @@ sub dequeue {
 
 		# flatten to a single list of fields
 		my $fields = $type eq 'groups'
-			? [map { @{ $self->{groups}{$_} } } @$names]
+			? [map { @{ $self->{groups}{$_} || [] } } @$names]
 			: $names;
 
 		# create a single instance of the sub
