@@ -8,6 +8,8 @@ my %tests = (
 		[ [{qw(hello goodbye)}], {hello => 'goodbye'} ],
 		[ [{qw(B bee C cee)}, 'dee'], {A => 'dee'} ],
 		[ [{qw(B bee C cee)}, 'dee'], {B => 'bee'} ],
+		[ [{qw(B bee C cee)}, undef], {A => undef} ],
+		[ [{qw(B bee C cee)}], {A => 'A'} ],
 	],
 	gsub => [
 		[ [q/^h(e)l(l)(o)(!?)$/, '$1${2}$3$4'], {'hello!' => 'elo!', hello => 'elo'}], 
@@ -82,7 +84,9 @@ while( my ($name, $tests) = each %tests ){
 	foreach my $test ( @$tests ){
 		my ($args, $values) = @$test;
 		while( my ($in, $exp) = each %$values ){
-			is($all->{$name}->($in, @$args), $exp, "$name: $in => $exp");
+			is($all->{$name}->($in, @$args), $exp,
+				sprintf("%s: %s => %s",
+					map { defined $_ ? $_ : '~' } $name, $in, $exp));
 		}
 	}
 }

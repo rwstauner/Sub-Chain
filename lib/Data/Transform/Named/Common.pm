@@ -50,16 +50,19 @@ sub _all {
 
 =func exchange
 
-	exchange($str, {Y => 'yes', N => 'no'}, 'maybe');
+	exchange($str, {Y => 'yes', N => 'no'}, 'maybe'); # no match returns 'maybe'
+	exchange($str, {Y => 'yes', N => 'no'});          # no match returns $str
 
 Exchange one value for another.
-If the string matches the first item of a pair, return the second item.
-A fallback value can be specified if 
+If the string exists in the provided hash, return the corresponding value.
+If not, and a fallback value is specified, return that.
+If no fallback is specified, return the original string.
 
 =cut
 
 sub exchange {
-	my ($data, $exchanges, $fallback) = @_;
+	my ($data, $exchanges) = (shift, shift);
+	my $fallback = @_ ? shift : $data;
 	return exists $exchanges->{$data}
 		? $exchanges->{$data}
 		: $fallback;
