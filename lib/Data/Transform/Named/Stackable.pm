@@ -137,6 +137,36 @@ sub dequeue {
 	delete $self->{queue};
 }
 
+=method fields
+
+	$stack->fields(@fields);
+
+Append fields to the list of all known fields.
+This tells the object which fields are available/expected
+which can be useful for specifying groups based on exclusions.
+
+For example:
+
+	$stack->group(some => {not => [qw(primary secondary)]});
+	$stack->fields(qw(primary secondary this that));
+	# the 'some' group will now contain ['this', 'that']
+
+	$stack->fields('another');
+	# the 'some' group will now contain ['this', 'that', 'another']
+
+This is a convenience method.
+Arguments are passed to L<Set::DynamicGroups/append_items>.
+
+=cut
+
+sub fields {
+	my ($self) = shift;
+	$self->{groups}->append_items(@_);
+	$self->reprocess_queue
+		if $self->{dequeued};
+	return $self;
+}
+
 =method group
 
 	$stack->group(groupname => [qw(fields)]);
@@ -153,6 +183,7 @@ sub group {
 	$self->{groups}->append(@_);
 	$self->reprocess_queue
 		if $self->{dequeued};
+	return $self;
 }
 
 =method push

@@ -122,4 +122,20 @@ SKIP: {
 	throws_ok(sub { $mod->new(warn_no_field => 'anything else') }, qr/cannot be set to/i, 'die with invalid value');
 }
 
+my @items = @{$stack->{groups}->items};
+$stack->fields('peach');
+is_deeply($stack->{groups}->items, ['peach', @items], 'fields added to dynamic-groups');
+
+{
+	# test example from POD:
+	my $stack = $mod->new;
+
+	$stack->group(some => {not => [qw(primary secondary)]});
+	$stack->fields(qw(primary secondary this that));
+	is_deeply($stack->{groups}->groups('some')->{some}, [qw(this that)], 'POD example of group exclusion');
+
+	$stack->fields('another');
+	is_deeply($stack->{groups}->groups('some')->{some}, [qw(this that another)], 'POD example of group exclusion');
+}
+
 done_testing;
