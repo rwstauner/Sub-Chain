@@ -180,10 +180,30 @@ Arguments are passed to L<Set::DynamicGroups/append>.
 
 sub group {
 	my ($self) = shift;
+	croak("group() takes argument pairs.  Did you mean groups()?")
+		if !@_;
+
 	$self->{groups}->append(@_);
 	$self->reprocess_queue
 		if $self->{dequeued};
 	return $self;
+}
+
+=method groups
+
+Return the object's instance of L<Set::DynamicGroups>.
+
+This can be useful if you need more advanced manipulation
+of the groups than is available through the L</group> and L</fields> methods.
+
+=cut
+
+sub groups {
+	my ($self) = shift;
+	croak("groups() takes no arguments.  Did you mean group()?")
+		if @_;
+
+	return $self->{groups};
 }
 
 =method push
