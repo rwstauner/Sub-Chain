@@ -21,11 +21,10 @@ use Data::Transform::Stackable;
 
 use Data::Transform::Named;
 use Object::Enum 0.072 ();
+use Set::DynamicGroups ();
 
 our $WarnNoField = Object::Enum->new({unset => 0, default => 'single',
 	values => [qw(never single always)]});
-
-# TODO: all-others group? (all the fields that haven't been done so far)
 
 =method new
 
@@ -86,7 +85,7 @@ sub new {
 	my $self = {
 		named  => $named,
 		fields => {},
-		groups => {},
+		groups => Set::DynamicGroups->new(),
 		queue  => [],
 		warn_no_field =>
 			$WarnNoField->clone(delete $opts{warn_no_field} || 'single'),
@@ -123,7 +122,7 @@ sub dequeue {
 
 		# flatten to a single list of fields
 		my $fields = $type eq 'groups'
-			? [map { @{ $self->{groups}{$_} || [] } } @$names]
+			? [map { @$_ } values %{ $self->{groups}->groups(@$names) }]
 			: $names;
 
 		# create a single instance of the sub
@@ -144,16 +143,14 @@ sub dequeue {
 
 Append fields to the specified group name.
 
+This is a convenience method.
+Arguments are passed to L<Set::DynamicGroups/append>.
+
 =cut
 
 sub group {
 	my ($self) = shift;
-	my %groups = ref $_[0] ? %{$_[0]} : @_;
-	while( my ($group, $fields) = each %groups ){
-		$fields = [$fields]
-			unless ref $fields;
-		push(@{ $self->{groups}->{$group} ||= [] }, @$fields);
-	}
+	$self->{groups}->append(@_);
 	$self->reprocess_queue
 		if $self->{dequeued};
 }
@@ -317,3 +314,8 @@ sub _transform_one {
 }
 
 1;
+
+=head1 SEE ALSO
+
+=for :list
+* L<Set::DynamicGroups>

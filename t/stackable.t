@@ -29,9 +29,9 @@ my @fruit2 = qw(banana grape);
 my @fruits = (@fruit1, @fruit2);
 
 $stack->group(fruit => \@fruit1);
-is_deeply($stack->{groups}{fruit}, \@fruit1, 'group');
+is_deeply($stack->{groups}->groups('fruit')->{fruit}, \@fruit1, 'group');
 $stack->group(fruit => \@fruit2);
-is_deeply($stack->{groups}{fruit}, \@fruits, 'group');
+is_deeply($stack->{groups}->groups('fruit')->{fruit}, \@fruits, 'group');
 
 my $dts_mod = 'Data::Transform::Stackable';
 
