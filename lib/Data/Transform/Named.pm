@@ -131,3 +131,4 @@ sub transform {
 =for :list
 * Replace Data::Transform with a simpler, more appropriate implementation
 * Consider a name change
+* Consider options to the transformers (like {on_undef => 'do_what'})

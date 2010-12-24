@@ -381,7 +381,7 @@ sub _transform_one {
 =head1 TODO
 
 =for :list
-* finalizers to run in reverse order at the end of the stack
+* Finalizers to run in reverse order at the end of the stack
 
 =head1 SEE ALSO
 
