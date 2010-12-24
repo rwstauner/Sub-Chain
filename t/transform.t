@@ -7,6 +7,7 @@ use Test::More;
 my $mod = 'Data::Transform::Named';
 require_ok($mod);
 my $stack = $mod->new->add_common->stackable;
+$stack->named->add('define' => sub { !defined $_[0] ? ' ~ ' : $_[0] });
 
 $stack->push('trim', fields => [qw(name address)]);
 $stack->push('squeeze', fields => 'name');

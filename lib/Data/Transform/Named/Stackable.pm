@@ -206,6 +206,18 @@ sub groups {
 	return $self->{groups};
 }
 
+=method named
+
+Returns the stack's instance of L<Data::Transform::Named>.
+
+Useful if you want to add more named transformers.
+
+=cut
+
+sub named {
+	$_[0]->{named};
+}
+
 =method push
 
 	$stack->push($name,   $type, [qw(fields)], @arguments);
