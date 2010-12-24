@@ -125,3 +125,9 @@ sub transform {
 =for stopwords stackable
 
 =for Pod::Coverage _require
+
+=head1 TODO
+
+=for :list
+* Replace Data::Transform with a simpler, more appropriate implementation
+* Consider a name change
