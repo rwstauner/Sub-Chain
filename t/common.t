@@ -10,6 +10,8 @@ my %tests = (
 		[ [{qw(B bee C cee)}, 'dee'], {B => 'bee'} ],
 		[ [{qw(B bee C cee)}, undef], {A => undef} ],
 		[ [{qw(B bee C cee)}], {A => 'A'} ],
+		[ [{qw(B bee C cee)}], [undef, undef] ],
+		[ [{qw(B bee C cee)}, 'u'], [undef, 'u'] ],
 	],
 	gsub => [
 		[ [q/^h(e)l(l)(o)(!?)$/, '$1${2}$3$4'], {'hello!' => 'elo!', hello => 'elo'}], 
@@ -21,6 +23,7 @@ my %tests = (
 		[ [q/(hello)/, '$1 there, you'], {goodbye => 'goodbye', 'hello' => 'hello there, you'}], 
 		[ [q/^0$/, '0-0-0 0:0:0'], {1 => 1, 0 => '0-0-0 0:0:0'}], 
 		[ [q/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3 00:00:00'], {20060222 => '2006/02/22 00:00:00', '' => ''}], 
+		[ [q/.+/, '\u.'], [undef, undef]],
 	],
 	match => [
 		[ [q/y/              ], {Y =>   '', y => 1,       n => '',   aye => 1,     arr => ''  }],
@@ -31,27 +34,31 @@ my %tests = (
 
 		[ [q/^(\d{3})$/,     ], {Y =>   '', 123 => '123', n => '',    12 => '',   4321 => ''  }],
 		[ [q/^(\d{3})$/, 1, 0], {Y => 0   , 123 => 1,     n =>  0,    12 => 0,    4321 => 0   }],
+		[ [q/./, 1, 0],         [undef, 0]],
 	],
 	remove_non_printing => [
-		[ [], {"\0hello" => 'hello', "\x13a\x11b\x1" => 'ab'}]
+		[ [], {"\0hello" => 'hello', "\x13a\x11b\x1" => 'ab'}],
+		[ [], [undef, undef]],
 	],
 	squeeze => [
-		[ [], {'  arr  ' => ' arr ', "\ttab" => ' tab', "t\t\tab" => "t ab", "t\tab" => "t ab", "t2\t " => 't2 '}]
+		[ [], {'  arr  ' => ' arr ', "\ttab" => ' tab', "t\t\tab" => "t ab", "t\tab" => "t ab", "t2\t " => 't2 '}],
+		[ [], [undef, undef]],
 	],
 	trim => [
-		[ [], {'  arr  ' => 'arr', "\ttab" => 'tab', "t\tab" => "t\tab", "t2\t " => 't2'}]
+		[ [], {'  arr  ' => 'arr', "\ttab" => 'tab', "t\tab" => "t\tab", "t2\t " => 't2'}],
+		[ [], [undef, undef]],
 	],
 	'lc' => [
-		[ [], {'lc' => 'lc', 'Lc' => 'lc', 'LC' => 'lc'}]
+		[ [], ['lc' => 'lc', 'Lc' => 'lc', 'LC' => 'lc', undef, '']],
 	],
 	'lcfirst' => [
-		[ [], {'lc' => 'lc', 'Lc' => 'lc', 'LC' => 'lC'}]
+		[ [], ['lc' => 'lc', 'Lc' => 'lc', 'LC' => 'lC', undef, '']],
 	],
 	'uc' => [
-		[ [], {'uc' => 'UC', 'Uc' => 'UC', 'UC' => 'UC'}]
+		[ [], ['uc' => 'UC', 'Uc' => 'UC', 'UC' => 'UC', undef, '']],
 	],
 	'ucfirst' => [
-		[ [], {'uc' => 'Uc', 'Uc' => 'Uc', 'UC' => 'UC'}]
+		[ [], ['uc' => 'Uc', 'Uc' => 'Uc', 'UC' => 'UC', undef, '']],
 	],
 );
 foreach my $args ( values %tests ){
@@ -92,6 +99,8 @@ while( my ($name, $tests) = each %tests ){
 		my ($args, $values) = @$test;
 		for( my $i = 0; $i < @$values; $i += 2 ){
 			my ($in, $exp) = @$values[$i, $i + 1];
+			local $SIG{__WARN__} = sub {}
+				if !defined $in;
 			is($all->{$name}->($in, @$args), $exp,
 				sprintf("%s: %s => %s",
 					map { defined $_ ? $_ : '~' } $name, $in, $exp));
