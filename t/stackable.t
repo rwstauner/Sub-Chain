@@ -103,9 +103,10 @@ SKIP: {
 	warning_is(sub { $stack->transform({'green', 'orange'}) }, undef, 'no warn multi');
 
 	no strict 'refs';
-	$stack->{warn_no_field} = ${"${mod}::WarnNoField"}->clone('always');
+	my %enums = %{"${mod}::Enums"};
+	$stack->{warn_no_field} = $enums{warn_no_field}->clone('always');
 	warning_is(sub { $stack->transform({'green', 'orange'}) }, q/No transformations specified for 'green'/, 'warn always');
-	$stack->{warn_no_field} = ${"${mod}::WarnNoField"}->clone('never');
+	$stack->{warn_no_field} = $enums{warn_no_field}->clone('never');
 	warning_is(sub { $stack->transform( 'green', 'orange' ) }, undef, 'warn never');
 }
 
