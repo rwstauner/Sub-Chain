@@ -29,10 +29,10 @@ isa_ok($stack, $stackmod);
 is($stack->{named}, $named, 'Named object transfered');
 
 foreach my $tr ( qw(one two three) ){
-	my $map = $named->transform($tr);
-	isa_ok($map, 'Data::Transform::Map');
+	my $map = $named->transformer($tr);
+	isa_ok($map, 'CODE');
 	no strict 'refs';
-	is(@{$map->get([0])}[0], &$tr, "sub $tr transfered");
+	is($map->([0]), &$tr, "sub $tr transfered");
 }
 
 done_testing;
