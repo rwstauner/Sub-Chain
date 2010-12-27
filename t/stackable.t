@@ -33,13 +33,10 @@ is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruit1, 'group');
 $stack->group(fruit => \@fruit2);
 is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruits, 'group');
 
-my $dts_mod = 'Data::Transform::Stackable';
-
-eval { $stack->push('no-op', 'goober') };
-like($@, qr/invalid/, 'error with invalid type');
+my $tr_ref = 'ARRAY';
 
 $stack->push('no-op', field => [qw(tree)]);
-isa_ok($stack->stack('tree'), $dts_mod);
+isa_ok($stack->stack('tree'), $tr_ref);
 
 $stack->{named}->add(filter('multi' => sub { $_[0] x $_[1] }));
 is($stack->{named}{named}{multi}->('boo', 2), 'booboo', 'test func');
@@ -48,15 +45,15 @@ $filter = '';
 my $APPLESTACK; # increment APPLESTACK for each transformation to 'apple' field; we'll test later
 my $FRUITSTACK; # increment FRUITSTACK for each transformation to 'fruit' group; we'll test later
 
-$stack->push('multi', field => 'apple', 2); ++$APPLESTACK;
+$stack->push('multi', field => 'apple', args => [2]); ++$APPLESTACK;
 
 $stack->push('no-op', groups => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
-isa_ok($stack->stack('apple'), $dts_mod);
+isa_ok($stack->stack('apple'), $tr_ref);
 is_deeply($stack->stack('orange'), $stack->stack('grape'), 'two stacks from one group the same');
 
 # white box testing for the queue
 
-my $razz = sub { map { [qw(razzberry fields), [ ref $_ ? @$_ : $_ ], []] } @_ };
+my $razz = sub { map { ['razzberry', {fields => [ ref $_ ? @$_ : $_ ], args => [], opts => {on_undef => 'skip'}}] } @_ };
 
 is($stack->{queue}, undef, 'queue empty');
 $stack->push('razzberry', field => 'tree');
@@ -81,12 +78,12 @@ $stack->group(qw(fruit strawberry));
 $stack->dequeue;
 ok((grep { $_ } map { $stack->stack($_) } @fruits) == @fruits, 'stack foreach field in group');
 
-ok(($stack->stack('apple')->filters) == $APPLESTACK, 'apple stack has expected filters');
+ok(@{$stack->stack('apple')} == $APPLESTACK, 'apple stack has expected subs');
 is($stack->transform('apple', 'pear'), ':-P :-P pearpear', 'transformed');
 is($filter, 'multi|no-op|razzberry|razzberry|', 'filter names');
 
 $filter = '';
-ok(($stack->stack('strawberry')->filters) == $FRUITSTACK, 'strawberry stack has expected filters w/o explicit push()');
+ok(@{$stack->stack('strawberry')} == $FRUITSTACK, 'strawberry stack has expected subs w/o explicit push()');
 is($stack->transform('strawberry', 'pear'), ':-P pear', 'transformed');
 is($filter, 'no-op|razzberry|', 'filter names');
 
