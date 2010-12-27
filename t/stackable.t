@@ -110,17 +110,20 @@ SKIP: {
 	warning_is(sub { $stack->transform( 'green', 'orange' ) }, undef, 'warn never');
 }
 
-SKIP: {
-	my $testex = 'Test::Exception';
-	eval "use $testex; 1";
-	skip "$testex required for testing exceptions" if $@;
+{
+	# NOTE: dropped Test::Exception because I randomly got this weird stack ref count bug:
+	# "Bizarre copy of HASH in sassign at /usr/share/perl/5.10/Carp/Heavy.pm"
+	# possibly because Test::Exception uses Sub::Uplevel?
+	# Regardless, we aren't testing very much (one live and one die), so just do it manually.
 
 	foreach my $wnf ( qw(always single never) ){
 		my $stack;
-		lives_ok(sub { $stack = $mod->new(warn_no_field => $wnf) }, 'expected to live');
+		ok(eval { $stack = $mod->new(warn_no_field => $wnf); 1 }, 'expected to live');
+		is($@, '', 'no death');
 		isa_ok($stack, $mod);
 	}
-	throws_ok(sub { $mod->new(warn_no_field => 'anything else') }, qr/cannot be set to/i, 'die with invalid value');
+	is(eval { $mod->new(warn_no_field => 'anything else'); 1 }, undef, 'died');
+	like($@, qr/cannot be set to/i, 'die with invalid value');
 }
 
 my @items = @{$stack->groups->items};
