@@ -1,5 +1,5 @@
 package Data::Transform::Named::Stackable;
-# ABSTRACT: Simple, named interface to Data::Transform::Stackable
+# ABSTRACT: Stack of data transformers to apply by name
 
 =head1 SYNOPSIS
 
@@ -15,9 +15,6 @@ package Data::Transform::Named::Stackable;
 use strict;
 use warnings;
 use Carp qw(croak carp);
-
-use Data::Transform 0.06;
-use Data::Transform::Stackable;
 
 use Data::Transform::Named;
 use Object::Enum 0.072 ();
@@ -158,11 +155,11 @@ sub dequeue {
 		# and copy its reference to the various stacks
 		my $sub = $self->{named}->transformer($tr, @$opts{qw(args opts)});
 		foreach my $field ( @$fields ){
-			( $self->{fields}->{$field} ||=
-				Data::Transform::Stackable->new() )->push( $map );
+			CORE::push(@{ $self->{fields}->{$field} ||= [] },
+				[$sub, @$opts{qw(args opts)}]);
 		}
 	}
-	# let 'queue' return false so we can do simple if queue checks
+	# let 'queue' return false so we can do simple 'if queue' checks
 	delete $self->{queue};
 }
 
@@ -344,7 +341,7 @@ sub reprocess_queue {
 
 	$stack->stack($field);
 
-Return the L<Data::Transform::Stackable> object for the given field name.
+Return the stack of transformations for the given field name.
 
 =cut
 
@@ -440,14 +437,21 @@ sub transform {
 
 	return $out;
 }
-# TODO: alias to 'get'?  Is it too different?
 
 sub _transform_one {
 	my ($self, $field, $value, $opts) = @_;
 	return $value
 		unless my $stack = $self->stack($field, $opts);
-	# Data::Transform::get expects and returns an arrayref
-	return @{ $stack->get([$value]) }[0];
+	foreach my $tr ( @$stack ){
+		my ($sub, $args, $opts) = @$tr;
+		if( !defined($value) ){
+			next if $opts->{on_undef}->is_skip;
+			$value = ''
+				if $opts->{on_undef}->is_blank;
+		}
+		$value = $sub->($value, @$args);
+	}
+	return $value;
 }
 
 1;
