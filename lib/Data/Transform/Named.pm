@@ -1,5 +1,5 @@
 package Data::Transform::Named;
-# ABSTRACT: Simple, named interface to Data::Transform
+# ABSTRACT: Collection of named data transformation subs
 
 =head1 SYNOPSIS
 
@@ -99,36 +99,39 @@ sub stackable {
 	);
 }
 
-=method transform
+=method transformer
 
-	$named->transform('name', @arguments);
-	$named->transform('match', 'yay', 'boo');
+	$named->transformer('name', \@arguments, \%options);
+	$named->transformer('match', ['yay', 'boo']);
+	$named->transformer('match', ['yay', 'boo'], {});
 
-Return a sub ready for inclusion in the stack.
-Returns a L<Data::Transform::Map> with a I<Code>
-parameter of the named sub called with the provided arguments.
+Return a sub ready for one-time use
+or for inclusion in a Stackable.
+
+If the 'bind' option is true,
+the sub will be wrapped in a closure with the provided \@arguments
+passed after the first element (the data being transformed).
 
 =cut
 
-sub transform {
-	my ($self, $name, @args) = @_;
+sub transformer {
+	my ($self, $name, $args, $opts) = @_;
 	my $sub = $self->{named}->{$name}
-		or croak("Unknown Transform name: '$name'");
+		or croak("Unknown Transformer name: '$name'");
 
-	return _require('Data::Transform::Map')->new(
-		Code => sub { $sub->($_[0], @args); }
-	);
+	# bind arguments to sub if requested (useful outside of Stackable)
+	$sub = sub { $sub->($_[0], @$args); }
+		if $opts->{bind};
+
+	return $sub;
 }
 
 1;
 
 =for stopwords stackable
 
-=for Pod::Coverage _require
-
 =head1 TODO
 
 =for :list
-* Replace Data::Transform with a simpler, more appropriate implementation
 * Consider a name change
 * Consider options to the transformers (like {on_undef => 'do_what'})
