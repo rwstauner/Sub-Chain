@@ -140,18 +140,23 @@ sub dequeue {
 	# shift items off the queue until they've all been processed
 	while( my $item = shift @$queue ){
 		# save this item in case we need to reprocess the whole queue later
-		push(@$dequeued, $item);
+		CORE::push(@$dequeued, $item);
 
-		my ($tr, $type, $names, $args) = @$item;
+		my ($tr, $opts) = @$item;
 
-		# flatten to a single list of fields
-		my $fields = $type eq 'groups'
-			? [map { @$_ } values %{ $self->{groups}->groups(@$names) }]
-			: $names;
+		my $fields = $opts->{fields} || [];
+		# keep fields unique
+		my %seen = map { $_ => 1 } @$fields;
+		# append unique fields from groups (if there are any)
+		if( my $groups = $opts->{groups} ){
+			CORE::push(@$fields, grep { !$seen{$_}++ }
+				map { @$_ } values %{ $self->{groups}->groups(@$groups) }
+			);
+		}
 
 		# create a single instance of the sub
 		# and copy its reference to the various stacks
-		my $map = $self->{named}->transform($tr, @$args);
+		my $sub = $self->{named}->transformer($tr, @$opts{qw(args opts)});
 		foreach my $field ( @$fields ){
 			( $self->{fields}->{$field} ||=
 				Data::Transform::Stackable->new() )->push( $map );
@@ -242,30 +247,75 @@ sub named {
 	$_[0]->{named};
 }
 
+sub _normalize_spec {
+	my ($self, $opts) = @_;
+
+	# Don't alter \%opts.  Limit %norm to desired keys.
+	my %norm;
+	my %aliases = (
+		arguments => 'args',
+		options   => 'opts',
+		field     => 'fields',
+		group     => 'groups',
+	);
+	while( my ($alias, $name) = each %aliases ){
+		# store the alias in the actual key
+		# overwrite with actual key if specified
+		foreach my $key ( $alias, $name ){
+			$norm{$name} = $opts->{$key}
+				if exists  $opts->{$key};
+		}
+	}
+
+	# allow a single string and convert it to an arrayref
+	foreach my $type ( qw(fields groups) ){
+		$norm{$type} = [$norm{$type}]
+			if exists($norm{$type}) && !ref($norm{$type});
+	}
+
+	# simplify code later by initializing these to refs
+	$norm{args} ||= [];
+	$norm{opts} ||= {};
+	$norm{opts}->{on_undef} = $self->{on_undef}->clone(
+		exists $norm{opts}->{on_undef} ? $norm{opts}->{on_undef} : ());
+
+	return \%norm;
+}
+
 =method push
 
-	$stack->push($name,   $type, [qw(fields)], @arguments);
+	$stack->push($name, %options); # or \%options
 	$stack->push('trim',  fields => [qw(fld1 fld2)]);
-	$stack->push('match', 'groups', 'group1', "matched", "not matched");
+	$stack->push('trim',  field  => 'col3', opts => {on_undef => 'blank'});
+	$stack->push('match', groups => 'group1', args => ['pattern']);
 
 Push a named transformation onto the stack
-for the specified fields or groups
-and pass the supplied arguments.
+for the specified fields and/or groups.
+
+Possible options:
+
+=for :list
+* C<fields> (or C<field>)
+An arrayref of field names to transform
+* C<groups> (or C<group>)
+An arrayref of group names to transform
+* C<args> (or C<arguments>)
+An arrayref of arguments to pass to the transformation function
+* C<opts> (or C<options>)
+A hashref of options for the transformer
+(See L<Data::Transform::Named/transformer>)
+
+If a single string is provided for C<fields> or C<groups>
+it will be converted to an arrayref.
 
 =cut
 
 sub push {
-	my ($self, $tr, $type, $names, @args) = @_;
+	my ($self, $tr) = (shift, shift);
+	my %opts = ref $_[0] ? %{$_[0]} : @_;
 
-	# allow a single name and convert it to an arrayref
-	$names = [$names]
-		if ! ref $names;
-
-	# accept singular or plural... we want the plural
-	$type =~ s/^(field|group).*$/$1s/
-		or croak("'$type' invalid: Must be field(s) or group(s)");
-
-	push(@{ $self->{queue} ||= [] }, [$tr, $type, $names, \@args]);
+	CORE::push(@{ $self->{queue} ||= [] },
+		[$tr, $self->_normalize_spec(\%opts)]);
 
 	return $self;
 }
