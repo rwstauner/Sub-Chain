@@ -54,6 +54,12 @@ my %tests = (
 		[ [], {'uc' => 'Uc', 'Uc' => 'Uc', 'UC' => 'UC'}]
 	],
 );
+foreach my $args ( values %tests ){
+	foreach my $arg ( @$args ){
+		$arg->[1] = [map { $_ => $arg->[1]{$_} } keys %{$arg->[1]}]
+			if ref $arg->[1] eq 'HASH';
+	}
+}
 
 my $mod = 'Data::Transform::Named::Common';
 my $nmod = 'Data::Transform::Named';
@@ -66,7 +72,8 @@ foreach my $list ( [qw(squeeze trim)], [qw(lc uc lcfirst ucfirst)], [qw(match)] 
 	push(@test_all, sub { ($mod->_all(@$list), [@$list]) });
 }
 
-plan tests => (map { keys %{$$_[1]} } map { @$_ } values(%tests)) + 2 + (2 * @test_all); # function tests + require + _all()
+sub sum { my $s = 0; $s += $_ for @_; $s; }
+plan tests => sum(map { @{$$_[1]}/2 } map { @$_ } values(%tests)) + 2 + (2 * @test_all); # function tests + require + _all()
 
 require_ok($mod);
 require_ok($nmod);
@@ -83,7 +90,8 @@ my $all = $mod->_all;
 while( my ($name, $tests) = each %tests ){
 	foreach my $test ( @$tests ){
 		my ($args, $values) = @$test;
-		while( my ($in, $exp) = each %$values ){
+		for( my $i = 0; $i < @$values; $i += 2 ){
+			my ($in, $exp) = @$values[$i, $i + 1];
 			is($all->{$name}->($in, @$args), $exp,
 				sprintf("%s: %s => %s",
 					map { defined $_ ? $_ : '~' } $name, $in, $exp));
