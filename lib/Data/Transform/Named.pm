@@ -134,4 +134,3 @@ sub transformer {
 
 =for :list
 * Consider a name change
-* Consider options to the transformers (like {on_undef => 'do_what'})
