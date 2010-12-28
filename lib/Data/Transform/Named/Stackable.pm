@@ -456,6 +456,8 @@ sub _transform_one {
 
 1;
 
+=for stopwords Finalizers
+
 =head1 TODO
 
 =for :list
