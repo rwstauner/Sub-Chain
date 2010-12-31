@@ -144,7 +144,7 @@ sub dequeue {
 		my $fields = $opts->{fields} || [];
 		# keep fields unique
 		my %seen = map { $_ => 1 } @$fields;
-		# append unique fields from groups (if there are any)
+		# add unique fields from groups (if there are any)
 		if( my $groups = $opts->{groups} ){
 			CORE::push(@$fields, grep { !$seen{$_}++ }
 				map { @$_ } values %{ $self->{groups}->groups(@$groups) }
@@ -167,7 +167,7 @@ sub dequeue {
 
 	$stack->fields(@fields);
 
-Append fields to the list of all known fields.
+Add fields to the list of all known fields.
 This tells the object which fields are available/expected
 which can be useful for specifying groups based on exclusions.
 
@@ -181,13 +181,13 @@ For example:
 	# the 'some' group will now contain ['this', 'that', 'another']
 
 This is a convenience method.
-Arguments are passed to L<Set::DynamicGroups/append_items>.
+Arguments are passed to L<Set::DynamicGroups/add_items>.
 
 =cut
 
 sub fields {
 	my ($self) = shift;
-	$self->{groups}->append_items(@_);
+	$self->{groups}->add_items(@_);
 	$self->reprocess_queue
 		if $self->{dequeued};
 	return $self;
@@ -197,10 +197,10 @@ sub fields {
 
 	$stack->group(groupname => [qw(fields)]);
 
-Append fields to the specified group name.
+Add fields to the specified group name.
 
 This is a convenience method.
-Arguments are passed to L<Set::DynamicGroups/append>.
+Arguments are passed to L<Set::DynamicGroups/add>.
 
 =cut
 
@@ -209,7 +209,7 @@ sub group {
 	croak("group() takes argument pairs.  Did you mean groups()?")
 		if !@_;
 
-	$self->{groups}->append(@_);
+	$self->{groups}->add(@_);
 	$self->reprocess_queue
 		if $self->{dequeued};
 	return $self;
