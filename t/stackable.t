@@ -123,9 +123,9 @@ SKIP: {
 	like($@, qr/cannot be set to/i, 'die with invalid value');
 }
 
-my @items = @{$stack->groups->items};
+my @items = $stack->groups->items;
 $stack->fields('peach');
-is_deeply($stack->groups->items, ['peach', @items], 'fields added to dynamic-groups');
+is_deeply([$stack->groups->items], ['peach', @items], 'fields added to dynamic-groups');
 
 {
 	# test example from POD:
