@@ -286,11 +286,11 @@ it will be converted to an arrayref.
 =cut
 
 sub append {
-	my ($self, $tr) = (shift, shift);
+	my ($self, $sub) = (shift, shift);
 	my %opts = ref $_[0] ? %{$_[0]} : @_;
 
 	CORE::push(@{ $self->{queue} ||= [] },
-		[$tr, $self->_normalize_spec(\%opts)]);
+		[$sub, $self->_normalize_spec(\%opts)]);
 
 	return $self;
 }
