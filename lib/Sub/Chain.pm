@@ -286,3 +286,46 @@ Valid values are:
 The default is C<proceed>.
 
 =end :list
+
+=head1 RATIONALE
+
+This module started out as C<Data::Transform::Named>,
+a named wrapper (like C<Sub::Chain::Named>) around
+L<Data::Transform> (and specifically L<Data::Transform::Map>).
+
+As the module was nearly finished I realized I was using very little
+of L<Data::Transform> (and its documentation suggested that
+I probably wouldn't want to use the only part that I I<was> using).
+I also found that the output was not always what I expected.
+I decided that it seemed reasonable according to the likely purpose
+of L<Data::Transform>, and this module simply needed to be different.
+
+So I attempted to think more abstractly
+and realized that the essence of the module was not tied to
+data transformation, but merely the succession of simple subroutine calls.
+
+I then found and considered L<Sub::Pipeline>
+but needed to be able to use the same
+named subroutine with different arguments in a single chain,
+so it seemed easier to me to stick with the code I had written
+and just rename it and abstract it a bit further.
+
+I also looked into L<Rule::Engine> which was beginning development
+at the time I was searching.
+However, like L<Data::Transform>, seemed more complex than what I needed.
+When I saw that L<Rule::Engine> was using [the very excellent] L<Moose>
+I decided to pass since I was doing work on a number of very old machines
+with old distros and old perls and constrained resources.
+Again, it just seemed to be much more than what I was looking for.
+
+=head1 SEE ALSO
+
+=for :list
+* L<Sub::Chain::Named>
+* L<Sub::Pipeline>
+* L<Data::Transform>
+* L<Rule::Engine>
+
+=cut
+
+# TODO: link to questions on perlmonks and stackoverflow?
