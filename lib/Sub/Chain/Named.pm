@@ -1,0 +1,103 @@
+package Sub::Chain::Named;
+# ABSTRACT: subclass of Sub::Chain with named subs
+
+=head1 SYNOPSIS
+
+	my $chain = Sub::Chain::Named->new(subs => {name1 => \&sub1});
+	$chain->name_subs(name2 => \&sub2, name3 => \&sub3);
+	...
+	$chain->append($name, \@args, \%opts);
+
+=cut
+
+use strict;
+use warnings;
+use Carp qw(croak);
+use Sub::Chain;
+our @ISA = qw(Sub::Chain);
+
+=method new
+
+	my $chain = Sub::Chain::Named->new(
+		subs => {
+			action => sub {},
+		}
+	);
+
+Instantiate a L<Sub::Chain> instance
+with a collection of named subs.
+
+A hashref of C<< name => \&sub >> pairs can be passed
+as the C<subs> option.
+
+See L<Sub::Chain/new> for more information.
+
+=cut
+
+sub new {
+	my $class = shift;
+	my %opts = ref $_[0] ? %{$_[0]} : @_;
+	my $subs = delete $opts{subs};
+
+	my $self = $class->SUPER::new(%opts);
+	$self->{named} = $subs || {};
+
+	return $self;
+}
+
+=method append
+
+	$named->append($sub_name);
+	$named->append($sub_name, \@args, \%opts);
+
+Just like L<Sub::Chain/append>
+except that C<$sub_name> is a string
+which is converted to the corresponding sub
+and then passed to L<Sub::Chain/append>.
+
+=cut
+
+sub append {
+	my ($self, $name, @append) = @_;
+	my $sub = $self->{named}{$name}
+		or croak("No sub defined for name: $name");
+	$self->SUPER::append($sub, @append);
+}
+# aliased in Sub::Chain
+*push = \&append;
+
+=method name_subs
+X<name_sub>
+
+	$named->name_subs(goober => \&peant_butter);
+
+Add named subs to the collection.
+Takes a hash (or hashref),
+or just a single name and a value (a small hash).
+
+=cut
+
+sub name_subs {
+	my ($self) = shift;
+	my %subs = ref $_[0] ? %{$_[0]} : @_;
+
+	# TODO: warn if already exists?
+	@{ $self->{named} }{keys %subs} = values %subs;
+
+	# chainable
+	return $self;
+}
+# alias to avoid typos based on singular (rather than plural) arguments
+*name_sub = \&name_subs;
+
+1;
+
+=head1 DESCRIPTION
+
+This is a subclass of L<Sub::Chain>.
+It stores a list of named subs
+and then accepts the name as an argument to L</append>
+(instead of the coderef).
+
+This can simplify things if, for example,
+you are taking the list of subs dynamically from file input.

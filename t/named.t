@@ -2,13 +2,13 @@ use strict;
 use warnings;
 use Test::More;
 
-my $mod = 'Data::Transform::Named';
+my $mod = 'Sub::Chain::Named';
 require_ok($mod);
 
 my $sub = sub { ":-P" };
 my $named = $mod->new;
 isa_ok($named, $mod);
-$named = $mod->new(tongue => $sub);
+$named = $mod->new(subs => {tongue => $sub});
 isa_ok($named, $mod);
 is_deeply($named->{named}, {tongue => $sub}, 'got named sub through new()');
 
@@ -16,23 +16,21 @@ sub one   { 1 }
 sub two   { 2 }
 sub three { 3 }
 
-$named->add(one => \&one);
-is_deeply($named->{named}, {tongue => $sub, one => \&one}, 'got named sub  through add()');
-$named->add(two => \&two, three => \&three);
-is_deeply($named->{named}, {tongue => $sub, one => \&one, two => \&two, three => \&three}, 'got named subs through add()');
+$named->name_sub(one => \&one);
+is_deeply($named->{named}, {tongue => $sub, one => \&one}, 'got named sub through name_sub()');
+$named->name_subs(two => \&two, three => \&three);
+is_deeply($named->{named}, {tongue => $sub, one => \&one, two => \&two, three => \&three}, 'got named subs through name_subs()');
 
-# add_common() tested in t/common.t
+$named->push('tongue');
+is($named->(4), ':-P', 'got expected (last) value');
+$named->append('one');
+is($named->(4), '1', 'got expected (last) value');
+$named->append('three');
+is($named->(4), '3', 'got expected (last) value');
 
-my $stackmod = 'Data::Transform::Named::Stackable';
-my $stack = $named->stackable;
-isa_ok($stack, $stackmod);
-is($stack->{named}, $named, 'Named object transfered');
-
-foreach my $tr ( qw(one two three) ){
-	my $map = $named->transformer($tr);
-	isa_ok($map, 'CODE');
-	no strict 'refs';
-	is($map->([0]), &$tr, "sub $tr transfered");
-}
+$named->name_sub({times2 => sub { $_[0] * 2 }});
+is($named->call(8), 3, 'defined sub not added to stack');
+$named->append('times2');
+is($named->call(8), 6, 'chained values');
 
 done_testing;
