@@ -145,8 +145,8 @@ sub dequeue {
 		# create a single instance of the sub
 		# and copy its reference to the various stacks
 		foreach my $field ( @$fields ){
-			($self->{fields}->{$field} ||= Sub::Chain->new())
-				->push($sub, @$opts{qw(args opts)});
+			($self->{fields}->{$field} ||= $self->{chain_class}->new())
+				->append($sub, @$opts{qw(args opts)});
 		}
 	}
 	# let 'queue' return false so we can do simple 'if queue' checks
