@@ -1,14 +1,24 @@
-package Data::Transform::Named::Stackable;
-# ABSTRACT: Stack of data transformers to apply by name
+package Sub::Chain::Group;
+# ABSTRACT: Group chains of subs by field name
 
 =head1 SYNOPSIS
 
-	my $stack = Data::Transform::Named::Stackable->new();
+	my $chain = Sub::Chain::Group->new();
+	$chain->append(\&trim, fields => [qw(name address)]);
+	# append other subs to this or other fields as desired...
+	$trimmed = $chain->call(address => ' 123 Street Rd. ');
 
-	$stack->push('trim', fields => [qw(name address)]);
+	# or, using a Sub::Chain subclass:
 
+	my $chain = Sub::Chain::Group->new(
+		chain_class => 'Sub::Chain::Named',
+		chain_args  => {subs => {uc => sub { uc $_[0] } }}
+	);
 	$stack->group(fruits => [qw(apple orange banana)]);
-	$stack->push('trim', groups => 'fruits');
+	$stack->append('uc', groups => 'fruits');
+
+	$uc_fruit = $chain->call({apple => 'green', orange => 'dirty'});
+	# returns a hashref: {apple => 'GREEN', orange => 'DIRTY'}
 
 =cut
 
@@ -27,26 +37,31 @@ our %Enums = (
 
 =method new
 
-	# use the default functions from Data::Transform::Named::Common
-	Data::Transform::Named::Stackable->new();
+	my $chain = Sub::Chain::Group->new(%opts);
 
-	# or define your own set of functions:
-	my $named = Data::Transform::Named->new()->add(
-		something => sub {}
+	my $chain = Sub::Chain::Group->new(
+		chain_class => 'Sub::Chain::Group',
+		chain_args  => {subs => {happy => sub { ":-P" } } },
 	);
 
-	my $stack = Data::Transform::Named::Stackable->new(named => $named);
-	# or
-	my $stack = $named->stackable()
-
-If you're creating your own collection of named functions,
-it may be easier to use L<Data::Transform::Named/stackable>.
+Constructor;  Takes a hash or hashref of options.
 
 Possible options:
 
 =begin :list
 
-* I<warn_no_field>
+* C<chain_class>
+The L<Sub::Chain> class that will be instantiated for each field;
+You can set this to L<Sub::Chain::Named> or another subclass.
+
+* C<chain_args>
+A hashref of arguments that will be sent to the
+constructor of the C<chain_class> module.
+Here you can set alternate default values (see L<Sub::Chain/OPTIONS>)
+or, for example, include the C<subs> parameter
+if you're using L<Sub::Chain::Named>.
+
+* C<warn_no_field>
 Whether or not to emit a warning if asked to transform a field
 but transformations were not specified for that field
 (specifically when L</stack> is called and no stack exists).
@@ -75,9 +90,9 @@ sub new {
 	my $class = shift;
 	my %opts = ref $_[0] ? %{$_[0]} : @_;
 
-	my $named = delete $opts{named} || Data::Transform::Named->new->add_common;
 	my $self = {
-		named  => $named,
+		chain_class => 'Sub::Chain',
+		chain_args => {},
 		fields => {},
 		groups => Set::DynamicGroups->new(),
 		queue  => [],
@@ -99,8 +114,8 @@ Queuing allows you to specify a transformation
 for a group before you specify what fields belong in that group.
 
 This method is called when another method needs something
-from the stack and there are still specifications in the queue
-(L</stack> and L</transform>, for instance).
+from the chain and there are still specifications in the queue
+(like L</chain> and L</transform>, for instance).
 
 =cut
 
@@ -141,7 +156,7 @@ sub dequeue {
 
 =method fields
 
-	$stack->fields(@fields);
+	$chain->fields(@fields);
 
 Add fields to the list of all known fields.
 This tells the object which fields are available/expected
@@ -149,11 +164,11 @@ which can be useful for specifying groups based on exclusions.
 
 For example:
 
-	$stack->group(some => {not => [qw(primary secondary)]});
-	$stack->fields(qw(primary secondary this that));
+	$chain->group(some => {not => [qw(primary secondary)]});
+	$chain->fields(qw(primary secondary this that));
 	# the 'some' group will now contain ['this', 'that']
 
-	$stack->fields('another');
+	$chain->fields('another');
 	# the 'some' group will now contain ['this', 'that', 'another']
 
 This is a convenience method.
@@ -171,7 +186,7 @@ sub fields {
 
 =method group
 
-	$stack->group(groupname => [qw(fields)]);
+	$chain->group(groupname => [qw(fields)]);
 
 Add fields to the specified group name.
 
@@ -206,18 +221,6 @@ sub groups {
 		if @_;
 
 	return $self->{groups};
-}
-
-=method named
-
-Returns the stack's instance of L<Data::Transform::Named>.
-
-Useful if you want to add more named transformers.
-
-=cut
-
-sub named {
-	$_[0]->{named};
 }
 
 sub _normalize_spec {
@@ -255,14 +258,15 @@ sub _normalize_spec {
 	return \%norm;
 }
 
-=method push
+=method append
 
-	$stack->push($name, %options); # or \%options
-	$stack->push('trim',  fields => [qw(fld1 fld2)]);
-	$stack->push('trim',  field  => 'col3', opts => {on_undef => 'blank'});
-	$stack->push('match', groups => 'group1', args => ['pattern']);
+	$chain->push($name, %options); # or \%options
+	$chain->push(\&trim,  fields => [qw(fld1 fld2)]);
+	$chain->push(\&trim,  field  => 'col3', opts => {on_undef => 'blank'});
+	# or, if using Sub::Chain::Named
+	$chain->push('match', groups => 'group1', args => ['pattern']);
 
-Push a named transformation onto the stack
+Append a sub onto the chain
 for the specified fields and/or groups.
 
 Possible options:
@@ -273,17 +277,18 @@ An arrayref of field names to transform
 * C<groups> (or C<group>)
 An arrayref of group names to transform
 * C<args> (or C<arguments>)
-An arrayref of arguments to pass to the transformation function
+An arrayref of arguments to pass to the sub
+(see L<Sub::Chain/append>)
 * C<opts> (or C<options>)
-A hashref of options for the transformer
-(See L<Data::Transform::Named/transformer>)
+A hashref of options for the chain
+(see L<Sub::Chain/OPTIONS>)
 
 If a single string is provided for C<fields> or C<groups>
 it will be converted to an arrayref.
 
 =cut
 
-sub push {
+sub append {
 	my ($self, $tr) = (shift, shift);
 	my %opts = ref $_[0] ? %{$_[0]} : @_;
 
@@ -295,7 +300,7 @@ sub push {
 
 =method reprocess_queue
 
-Force the queue of transformation specifications
+Force the queue of chain specifications
 to be completely reprocessed.
 
 This gets called automatically when groups are changed
@@ -313,23 +318,23 @@ sub reprocess_queue {
 	# but don't actually rebuild it until necessary
 }
 
-=method stack
+=method chain
 
-	$stack->stack($field);
+	$chain->chain($field);
 
-Return the stack of transformations for the given field name.
+Return the sub chain for the given field name.
 
 =cut
 
-sub stack {
+sub chain {
 	my ($self, $name, $opts) = @_;
 	$opts ||= {};
 
 	$self->dequeue
 		if $self->{queue};
 
-	if( my $stack = $self->{fields}{$name} ){
-		return $stack;
+	if( my $chain = $self->{fields}{$name} ){
+		return $chain;
 	}
 
 	carp("No transformations specified for '$name'")
@@ -341,11 +346,11 @@ sub stack {
 
 =method transform
 
-	my $values = $stack->tramsform({key => 'value', ...});
-	my $values = $stack->tramsform([qw(fields)], [qw(values)]);
-	my $value  = $stack->transform('address', '123 Street Road');
+	my $values = $chain->transform({key => 'value', ...});
+	my $values = $chain->transform([qw(fields)], [qw(values)]);
+	my $value  = $chain->transform('address', '123 Street Road');
 
-Apply the stack of transformations to the supplied data.
+Call the sub chain on the supplied data.
 
 If a sole hash ref is supplied
 it will be looped over
@@ -355,7 +360,7 @@ For example:
 	# for use with DBI
 	$sth->execute;
 	while( my $hash = $sth->fetchrow_hashref() ){
-		my $tr_hash = $stack->transform($hash);
+		my $tr_hash = $chain->call($hash);
 	}
 
 If two array refs are supplied,
@@ -366,7 +371,7 @@ For example:
 	# for use with Text::CSV
 	my $header = $csv->getline($io);
 	while( my $array = $csv->getline($io) ){
-		my $tr_array = $stack->transform($header, $array);
+		my $tr_array = $chain->call($header, $array);
 	}
 
 If two arguments are given,
@@ -374,14 +379,14 @@ and the first is a string,
 it should be the field name,
 and the second argument the data.
 The return value will be the data after it has been
-passed through the stack of transformations.
+passed through the chain.
 
 	# simple data
-	my $trimmed = $stack->transform('trim', '  lots of space   ');
+	my $trimmed = $chain->call('spaced', '  lots of space   ');
 
 =cut
 
-sub transform {
+sub call {
 	my ($self) = shift;
 
 	$self->dequeue
@@ -395,7 +400,7 @@ sub transform {
 		my %in = %{$_[0]};
 		$out = {};
 		while( my ($key, $value) = each %in ){
-			$out->{$key} = $self->_transform_one($key, $value, $opts);
+			$out->{$key} = $self->_call_one($key, $value, $opts);
 		}
 	}
 	elsif( $ref eq 'ARRAY' ){
@@ -404,33 +409,38 @@ sub transform {
 		$out = [];
 		foreach my $i ( 0 .. $#fields ){
 			CORE::push(@$out,
-				$self->_transform_one($fields[$i], $data[$i], $opts));
+				$self->_call_one($fields[$i], $data[$i], $opts));
 		}
 	}
 	else {
-		$out = $self->_transform_one($_[0], $_[1]);
+		$out = $self->_call_one($_[0], $_[1]);
 	}
 
 	return $out;
 }
 
-sub _transform_one {
+sub _call_one {
 	my ($self, $field, $value, $opts) = @_;
 	return $value
-		unless my $stack = $self->stack($field, $opts);
-	return $stack->call($value);
+		unless my $chain = $self->chain($field, $opts);
+	return $chain->call($value);
 }
 
 1;
 
-=for stopwords Finalizers
+=head1 DESCRIPTION
 
-=head1 TODO
-
-=for :list
-* Finalizers to run in reverse order at the end of the stack
+This module provides an interface for managing multiple
+L<Sub::Chain> instances for a group of fields.
+It is mostly useful for applying a chain of subs
+to a set of data (like a hash or array (like a database record)).
+In addition to calling different L<Sub::Chain>s on specified fields
+It uses L<Set::DynamicGroups> to allow you to build sub chains
+for dynamic groups of fields.
 
 =head1 SEE ALSO
 
 =for :list
+* L<Sub::Chain>
+* L<Sub::Chain::Named>
 * L<Set::DynamicGroups>
