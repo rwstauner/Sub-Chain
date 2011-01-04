@@ -170,8 +170,11 @@ sub _copy_enums {
 	my ($self, $from, $to) = @_;
 	$to ||= $self;
 	while( my ($name, $enum) = each %Enums ){
-		$to->{$name} = $enum->clone(
-			exists $from->{$name} ? $from->{$name} : ()
+		$to->{$name} = ($self->{$name} || $enum)->clone(
+			# use the string passed in
+			exists $from->{$name} ? $from->{$name} :
+				# clone from the default value saved on the instance
+				$self->{$name} ? $self->{$name}->value : ()
 		);
 	};
 }
