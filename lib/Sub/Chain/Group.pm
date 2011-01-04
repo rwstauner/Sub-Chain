@@ -343,7 +343,7 @@ sub chain {
 		return $chain;
 	}
 
-	carp("No subs chained specified for '$name'")
+	carp("No subs chained for '$name'")
 		if ($self->{warn_no_field}->is_always)
 			|| ($self->{warn_no_field}->is_single && !$opts->{multi});
 
