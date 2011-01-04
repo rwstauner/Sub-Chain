@@ -1,18 +1,8 @@
-=head1 Data::Transform::Named
+=head1 Sub::Chain
 
-A simple, named interface to L<Data::Transform>.
-
-Create a collection of named functions
-to apply to a stack of named parameters
-for easily configurable transformation of data.
-
-	my $named = Data::Trasnform::Named->new;
-	$named->add(chew => sub {});
-
-	my $stack = $named->stackable;
-	$stack->push('chew', fields => 'address');
-
-	my $hash = $stack->transform({name => 'John', address => '123 Street Road'});
+This module aims to provide a simple interface for
+chaining multiple subs (coderefs) together
+and executing them one after the other in a single call.
 
 See module POD for more information.
 

@@ -199,6 +199,19 @@ Alias for L</append>.
 
 1;
 
+=head1 DESCRIPTION
+
+This module aims to provide a simple interface for
+chaining multiple subs (coderefs) together
+and executing them one after the other in a single call.
+
+It was specifically designed to be built dynamically
+from on a list of specifications provided at runtime
+to filter data through the specified list of functions.
+
+Also see L<Sub::Chain::Named>
+which appends subs to the chain by name rather than coderef.
+
 =head1 OPTIONS
 
 These options can define how a sub should be handled.
