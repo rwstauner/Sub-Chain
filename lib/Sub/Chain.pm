@@ -17,7 +17,7 @@ package Sub::Chain;
 
 use strict;
 use warnings;
-use Carp qw(croak cluck);
+use Carp qw(croak carp);
 
 # enable object to be called like a coderef
 use overload
@@ -119,7 +119,7 @@ sub call {
 	my $wantarray = wantarray;
 
 	my @chain = @{ $self->{chain} };
-	cluck("No subs appended to the chain")
+	carp("No subs appended to the chain")
 		unless @chain;
 
 	foreach my $tr ( @chain ){
