@@ -160,6 +160,9 @@ sub dequeue {
 	}
 	# let 'queue' return false so we can do simple 'if queue' checks
 	delete $self->{queue};
+
+	# what would be a good return value?
+	return;
 }
 
 =method fields
