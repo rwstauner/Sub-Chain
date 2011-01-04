@@ -9,6 +9,9 @@ my $chain = $mod->new(
 	chain_args  => {subs => {
 		'define' => sub { !defined $_[0] ? ' ~ ' : $_[0] },
 		'no_undefs' => sub { die "I said no!" if !defined $_[0]; },
+		'trim' => sub { (my $s = $_[0]) =~ s/(^\s+|\s+$)//g; $s },
+		'squeeze' => sub { (my $s = $_[0]) =~ s/\s+/ /g; $s },
+		'exchange' => sub { my ($s, $h) = @_; $h->{$s}; }
 	}},
 );
 
