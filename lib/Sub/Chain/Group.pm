@@ -26,6 +26,10 @@ use strict;
 use warnings;
 use Carp qw(croak carp);
 
+# this seems a little dirty, but it's not appropriate to put it in Sub::Chain
+use Sub::Chain;
+push(@Sub::Chain::CARP_NOT, __PACKAGE__);
+
 use Object::Enum 0.072 ();
 use Set::DynamicGroups ();
 use Sub::Chain ();
