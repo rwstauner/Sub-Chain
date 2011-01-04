@@ -154,7 +154,7 @@ sub dequeue {
 		# create a single instance of the sub
 		# and copy its reference to the various stacks
 		foreach my $field ( @$fields ){
-			($self->{fields}->{$field} ||= $self->{chain_class}->new())
+			($self->{fields}->{$field} ||= $self->new_sub_chain())
 				->append($sub, @$opts{qw(args opts)});
 		}
 	}
@@ -232,6 +232,18 @@ sub groups {
 		if @_;
 
 	return $self->{groups};
+}
+
+=method new_sub_chain
+
+This method is used internally to instantiate a new L<Sub::Chain>
+using the C<chain_class> and C<chain_args> options.
+
+=cut
+
+sub new_sub_chain {
+	my ($self) = @_;
+	return $self->{chain_class}->new($self->{chain_args});
 }
 
 sub _normalize_spec {
