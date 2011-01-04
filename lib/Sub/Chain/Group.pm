@@ -130,7 +130,7 @@ sub dequeue {
 		# save this item in case we need to reprocess the whole queue later
 		CORE::push(@$dequeued, $item);
 
-		my ($tr, $opts) = @$item;
+		my ($sub, $opts) = @$item;
 
 		my $fields = $opts->{fields} || [];
 		# keep fields unique
@@ -144,7 +144,6 @@ sub dequeue {
 
 		# create a single instance of the sub
 		# and copy its reference to the various stacks
-		my $sub = $self->{named}->transformer($tr, @$opts{qw(args opts)});
 		foreach my $field ( @$fields ){
 			($self->{fields}->{$field} ||= Sub::Chain->new())
 				->push($sub, @$opts{qw(args opts)});
