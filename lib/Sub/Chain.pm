@@ -42,6 +42,10 @@ our %Enums = (
 Constructor.
 Takes a hash or hashref of arguments.
 
+Accepts values as described in L<OPTIONS|/OPTIONS>
+that will be used as defaults
+for any sub that doesn't override them.
+
 =cut
 
 sub new {
@@ -80,6 +84,9 @@ an empty arrayref (C<[]>) can be used.
 This method returns the object so that it can be chained for simplicity:
 
 	$chain->append(\&sub, \@args)->append(\&sub2)->append(\&sub3, [], \%opts);
+
+The C<\%opts> hashref can be any of the options described in L</OPTIONS>
+to override the defaults on the object for this particular sub.
 
 =cut
 
@@ -191,3 +198,78 @@ Alias for L</append>.
 *push = \&append;
 
 1;
+
+=head1 OPTIONS
+
+These options can define how a sub should be handled.
+Specified in the options hashref for L</append>
+they apply to that particular sub.
+Specified in the constructor they can set the default
+for how to handle any sub that doesn't override the option.
+
+=begin :list
+
+* C<result>
+
+What to do with the result;
+Valid values are:
+
+=begin :list
+
+* C<replace> - replace the argument list with the return value of each sub
+
+* C<discard> - discard the return value of each sub
+
+=end :list
+
+The arguments to L</call> are passed to each sub in the chain.
+When C<replace> is specified the return value of one sub
+is the argument list to the next.
+This is useful, for instance, when chaining a number of
+data cleaning or transformation functions together:
+
+	sub add_uc { $_[0] . ' ' . uc $_[0]  }
+	sub repeat { $_[0] x $_[1] }
+
+	$chain->append(\&add_uc)->append(\&repeat, [2]);
+	$chain->call('hi');
+
+	# returns 'hi Hihi HI', similar to:
+
+	my $s = 'hi';
+	$s = add_uc($s);
+	$s = repeat($s, 2);
+
+When C<discard> is specified, the same arguments are sent to each sub.
+This is useful when chaining subs that are called for their side effects
+and you aren't interested in the return values.
+
+	# assume database handle has RaiseError set
+	$chain
+		->append(\&log)
+		->append(\&save_to_database)
+		->append(\&email_to_user);
+
+	# call in void context because we don't care about the return value
+	$chain->call($object);
+
+The default is C<replace> since that (arguably) makes this module more useful.
+
+* C<on_undef>
+
+What to do when a value is undefined;
+Valid values are:
+
+=begin :list
+
+* C<proceed> - proceed as normal (as if it was defined)
+
+* C<skip> - skip (don't call) the sub
+
+* C<blank> - initialize the value to a blank string
+
+=end :list
+
+The default is C<proceed>.
+
+=end :list
