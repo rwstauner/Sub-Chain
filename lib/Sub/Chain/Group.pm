@@ -95,8 +95,8 @@ sub new {
 	my %opts = ref $_[0] ? %{$_[0]} : @_;
 
 	my $self = {
-		chain_class => 'Sub::Chain',
-		chain_args => {},
+		chain_class => delete $opts{chain_class} || 'Sub::Chain',
+		chain_args  => delete $opts{chain_args}  || {},
 		fields => {},
 		groups => Set::DynamicGroups->new(),
 		queue  => [],
