@@ -4,8 +4,8 @@ use Test::More;
 
 my $mod = 'Sub::Chain::Group';
 require_ok($mod);
-my $stack = $mod->new();
-isa_ok($stack, $mod);
+my $chain = $mod->new();
+isa_ok($chain, $mod);
 
 my $filter;
 sub filter {
@@ -13,70 +13,70 @@ sub filter {
 	return ($name, sub { $filter .= "$name|"; &$sub(@_) });
 }
 
-$stack = $mod->new(subs => {filter('no-op', sub { $_[0] }), filter('razzberry' => sub { ":-P $_[0]" })});
-isa_ok($stack, $mod);
+$chain = $mod->new(subs => {filter('no-op', sub { $_[0] }), filter('razzberry' => sub { ":-P $_[0]" })});
+isa_ok($chain, $mod);
 
 my @fruit1 = qw(apple orange kiwi);
 my @fruit2 = qw(banana grape);
 my @fruits = (@fruit1, @fruit2);
 
-$stack->group(fruit => \@fruit1);
-is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruit1, 'group');
-$stack->group(fruit => \@fruit2);
-is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruits, 'group');
+$chain->group(fruit => \@fruit1);
+is_deeply($chain->groups->groups('fruit')->{fruit}, \@fruit1, 'group');
+$chain->group(fruit => \@fruit2);
+is_deeply($chain->groups->groups('fruit')->{fruit}, \@fruits, 'group');
 
 my $tr_ref = 'Sub::Chain';
 
-$stack->append('no-op', field => [qw(tree)]);
-isa_ok($stack->chain('tree'), $tr_ref);
+$chain->append('no-op', field => [qw(tree)]);
+isa_ok($chain->chain('tree'), $tr_ref);
 
-$stack->{named}->add(filter('multi' => sub { $_[0] x $_[1] }));
-is($stack->{named}{named}{multi}->('boo', 2), 'booboo', 'test func');
+$chain->{named}->add(filter('multi' => sub { $_[0] x $_[1] }));
+is($chain->{named}{named}{multi}->('boo', 2), 'booboo', 'test func');
 $filter = '';
 
-my $APPLESTACK; # increment APPLESTACK for each transformation to 'apple' field; we'll test later
-my $FRUITSTACK; # increment FRUITSTACK for each transformation to 'fruit' group; we'll test later
+my $APPLECHAIN; # increment APPLECHAIN for each transformation to 'apple' field; we'll test later
+my $FRUITCHAIN; # increment FRUITCHAIN for each transformation to 'fruit' group; we'll test later
 
-$stack->append('multi', field => 'apple', args => [2]); ++$APPLESTACK;
+$chain->append('multi', field => 'apple', args => [2]); ++$APPLECHAIN;
 
-$stack->append('no-op', groups => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
-isa_ok($stack->chain('apple'), $tr_ref);
-is_deeply($stack->chain('orange'), $stack->chain('grape'), 'two stacks from one group the same');
+$chain->append('no-op', groups => 'fruit'); ++$APPLECHAIN; ++$FRUITCHAIN;
+isa_ok($chain->chain('apple'), $tr_ref);
+is_deeply($chain->chain('orange'), $chain->chain('grape'), 'two chains from one group the same');
 
 # white box testing for the queue
 
 my $razz = sub { map { ['razzberry', {fields => [ ref $_ ? @$_ : $_ ], args => [], opts => {on_undef => 'skip'}}] } @_ };
 
-is($stack->{queue}, undef, 'queue empty');
-$stack->append('razzberry', field => 'tree');
-is_deeply($stack->{queue}, [ $razz->('tree') ], 'queue has entry');
-$stack->dequeue;
-is($stack->{queue}, undef, 'queue empty');
+is($chain->{queue}, undef, 'queue empty');
+$chain->append('razzberry', field => 'tree');
+is_deeply($chain->{queue}, [ $razz->('tree') ], 'queue has entry');
+$chain->dequeue;
+is($chain->{queue}, undef, 'queue empty');
 
-my @fields = qw(apple orange grape); ++$APPLESTACK;
+my @fields = qw(apple orange grape); ++$APPLECHAIN;
 for (my $i = 0; $i < @fields; ++$i ){
-	$stack->append('razzberry', field => $fields[$i]);
-	is_deeply($stack->{queue}, [ $razz->(@fields[0 .. $i ]) ], "queue has ${\($i + 1)}");
+	$chain->append('razzberry', field => $fields[$i]);
+	is_deeply($chain->{queue}, [ $razz->(@fields[0 .. $i ]) ], "queue has ${\($i + 1)}");
 }
 
-$stack->dequeue;
+$chain->dequeue;
 
-$stack->append('razzberry', group => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
-# want to test the resultant stacks...
-ok((grep { $_ } map { $stack->chain($_) } @fruits) == @fruits, 'stack foreach field in group');
+$chain->append('razzberry', group => 'fruit'); ++$APPLECHAIN; ++$FRUITCHAIN;
+# want to test the resultant chains...
+ok((grep { $_ } map { $chain->chain($_) } @fruits) == @fruits, 'chain foreach field in group');
 
 push(@fruits, 'strawberry');
-$stack->group(qw(fruit strawberry));
-$stack->dequeue;
-ok((grep { $_ } map { $stack->chain($_) } @fruits) == @fruits, 'stack foreach field in group');
+$chain->group(qw(fruit strawberry));
+$chain->dequeue;
+ok((grep { $_ } map { $chain->chain($_) } @fruits) == @fruits, 'chain foreach field in group');
 
-ok(@{$stack->chain('apple')->{chain}} == $APPLESTACK, 'apple stack has expected subs');
-is($stack->transform('apple', 'pear'), ':-P :-P pearpear', 'transformed');
+ok(@{$chain->chain('apple')->{chain}} == $APPLECHAIN, 'apple chain has expected subs');
+is($chain->transform('apple', 'pear'), ':-P :-P pearpear', 'transformed');
 is($filter, 'multi|no-op|razzberry|razzberry|', 'filter names');
 
 $filter = '';
-ok(@{$stack->chain('strawberry')->{chain}} == $FRUITSTACK, 'strawberry stack has expected subs w/o explicit append()');
-is($stack->transform('strawberry', 'pear'), ':-P pear', 'transformed');
+ok(@{$chain->chain('strawberry')->{chain}} == $FRUITCHAIN, 'strawberry chain has expected subs w/o explicit append()');
+is($chain->transform('strawberry', 'pear'), ':-P pear', 'transformed');
 is($filter, 'no-op|razzberry|', 'filter names');
 
 # transform() tested elsewhere
@@ -86,17 +86,17 @@ SKIP: {
 	eval "use $testwarn; 1";
 	skip "$testwarn required for testing warnings" if $@;
 
-	$stack->append('no-op', field => 'blue');
-	warning_is(sub { $stack->transform( 'blue',  'yellow' ) }, undef, 'no warning for specified field');
-	warning_is(sub { $stack->transform( 'green', 'orange' ) }, q/No transformations specified for 'green'/, 'warn single');
-	warning_is(sub { $stack->transform({'green', 'orange'}) }, undef, 'no warn multi');
+	$chain->append('no-op', field => 'blue');
+	warning_is(sub { $chain->transform( 'blue',  'yellow' ) }, undef, 'no warning for specified field');
+	warning_is(sub { $chain->transform( 'green', 'orange' ) }, q/No transformations specified for 'green'/, 'warn single');
+	warning_is(sub { $chain->transform({'green', 'orange'}) }, undef, 'no warn multi');
 
 	no strict 'refs';
 	my %enums = %{"${mod}::Enums"};
-	$stack->{warn_no_field} = $enums{warn_no_field}->clone('always');
-	warning_is(sub { $stack->transform({'green', 'orange'}) }, q/No transformations specified for 'green'/, 'warn always');
-	$stack->{warn_no_field} = $enums{warn_no_field}->clone('never');
-	warning_is(sub { $stack->transform( 'green', 'orange' ) }, undef, 'warn never');
+	$chain->{warn_no_field} = $enums{warn_no_field}->clone('always');
+	warning_is(sub { $chain->transform({'green', 'orange'}) }, q/No transformations specified for 'green'/, 'warn always');
+	$chain->{warn_no_field} = $enums{warn_no_field}->clone('never');
+	warning_is(sub { $chain->transform( 'green', 'orange' ) }, undef, 'warn never');
 }
 
 {
@@ -106,29 +106,29 @@ SKIP: {
 	# Regardless, we aren't testing very much (one live and one die), so just do it manually.
 
 	foreach my $wnf ( qw(always single never) ){
-		my $stack;
-		ok(eval { $stack = $mod->new(warn_no_field => $wnf); 1 }, 'expected to live');
+		my $chain;
+		ok(eval { $chain = $mod->new(warn_no_field => $wnf); 1 }, 'expected to live');
 		is($@, '', 'no death');
-		isa_ok($stack, $mod);
+		isa_ok($chain, $mod);
 	}
 	is(eval { $mod->new(warn_no_field => 'anything else'); 1 }, undef, 'died');
 	like($@, qr/cannot be set to/i, 'die with invalid value');
 }
 
-my @items = $stack->groups->items;
-$stack->fields('peach');
-is_deeply([$stack->groups->items], ['peach', @items], 'fields added to dynamic-groups');
+my @items = $chain->groups->items;
+$chain->fields('peach');
+is_deeply([$chain->groups->items], ['peach', @items], 'fields added to dynamic-groups');
 
 {
 	# test example from POD:
-	my $stack = $mod->new;
+	my $chain = $mod->new;
 
-	$stack->group(some => {not => [qw(primary secondary)]});
-	$stack->fields(qw(primary secondary this that));
-	is_deeply($stack->groups->groups('some')->{some}, [qw(this that)], 'POD example of group exclusion');
+	$chain->group(some => {not => [qw(primary secondary)]});
+	$chain->fields(qw(primary secondary this that));
+	is_deeply($chain->groups->groups('some')->{some}, [qw(this that)], 'POD example of group exclusion');
 
-	$stack->fields('another');
-	is_deeply($stack->groups->groups('some')->{some}, [qw(this that another)], 'POD example of group exclusion');
+	$chain->fields('another');
+	is_deeply($chain->groups->groups('some')->{some}, [qw(this that another)], 'POD example of group exclusion');
 }
 
 done_testing;
