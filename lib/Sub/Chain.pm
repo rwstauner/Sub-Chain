@@ -27,6 +27,8 @@ use overload
 use Object::Enum 0.072 ();
 
 our %Enums = (
+	result => Object::Enum->new({unset => 0, default => 'replace',
+		values => [qw(replace discard)]}),
 	on_undef => Object::Enum->new({unset => 0, default => 'proceed',
 		values => [qw(skip blank proceed)]}),
 );
@@ -115,6 +117,7 @@ sub call {
 		my @all = (@args, @$extra);
 		my @result;
 
+		# TODO: instead of duplicating enum objects do %opts = (%$self, %$opts)
 		if( @args && $opts->{on_undef} && !defined($args[0]) ){
 			next if $opts->{on_undef}->is_skip;
 			$args[0] = ''
