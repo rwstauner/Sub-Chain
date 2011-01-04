@@ -194,6 +194,8 @@ sub _copy_enums {
 
 1;
 
+=for stopwords runtime
+
 =head1 DESCRIPTION
 
 This module aims to provide a simple interface for
@@ -324,3 +326,5 @@ Again, it just seemed to be much more than what I was looking for.
 =cut
 
 # TODO: link to questions on perlmonks and stackoverflow?
+
+=for stopwords distros
