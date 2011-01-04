@@ -21,7 +21,7 @@ is_deeply($named->{named}, {tongue => $sub, one => \&one}, 'got named sub throug
 $named->name_subs(two => \&two, three => \&three);
 is_deeply($named->{named}, {tongue => $sub, one => \&one, two => \&two, three => \&three}, 'got named subs through name_subs()');
 
-$named->push('tongue');
+$named->append('tongue');
 is($named->(4), ':-P', 'got expected (last) value');
 $named->append('one');
 is($named->(4), '1', 'got expected (last) value');

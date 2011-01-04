@@ -63,8 +63,6 @@ sub append {
 		or croak("No sub defined for name: $name");
 	$self->SUPER::append($sub, @append);
 }
-# aliased in Sub::Chain
-*push = \&append;
 
 =method name_subs
 X<name_sub>

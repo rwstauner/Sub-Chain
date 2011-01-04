@@ -192,14 +192,6 @@ sub _copy_enums {
 	};
 }
 
-=method push
-
-Alias for L</append>.
-
-=cut
-
-*push = \&append;
-
 1;
 
 =head1 DESCRIPTION
