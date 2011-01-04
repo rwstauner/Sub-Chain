@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 
-my $mod = 'Data::Transform::Named::Stackable';
+my $mod = 'Sub::Chain::Group';
 require_ok($mod);
 my $stack = $mod->new();
 isa_ok($stack, $mod);
@@ -27,8 +27,8 @@ is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruits, 'group');
 
 my $tr_ref = 'Sub::Chain';
 
-$stack->push('no-op', field => [qw(tree)]);
-isa_ok($stack->stack('tree'), $tr_ref);
+$stack->append('no-op', field => [qw(tree)]);
+isa_ok($stack->chain('tree'), $tr_ref);
 
 $stack->{named}->add(filter('multi' => sub { $_[0] x $_[1] }));
 is($stack->{named}{named}{multi}->('boo', 2), 'booboo', 'test func');
@@ -37,45 +37,45 @@ $filter = '';
 my $APPLESTACK; # increment APPLESTACK for each transformation to 'apple' field; we'll test later
 my $FRUITSTACK; # increment FRUITSTACK for each transformation to 'fruit' group; we'll test later
 
-$stack->push('multi', field => 'apple', args => [2]); ++$APPLESTACK;
+$stack->append('multi', field => 'apple', args => [2]); ++$APPLESTACK;
 
-$stack->push('no-op', groups => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
-isa_ok($stack->stack('apple'), $tr_ref);
-is_deeply($stack->stack('orange'), $stack->stack('grape'), 'two stacks from one group the same');
+$stack->append('no-op', groups => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
+isa_ok($stack->chain('apple'), $tr_ref);
+is_deeply($stack->chain('orange'), $stack->chain('grape'), 'two stacks from one group the same');
 
 # white box testing for the queue
 
 my $razz = sub { map { ['razzberry', {fields => [ ref $_ ? @$_ : $_ ], args => [], opts => {on_undef => 'skip'}}] } @_ };
 
 is($stack->{queue}, undef, 'queue empty');
-$stack->push('razzberry', field => 'tree');
+$stack->append('razzberry', field => 'tree');
 is_deeply($stack->{queue}, [ $razz->('tree') ], 'queue has entry');
 $stack->dequeue;
 is($stack->{queue}, undef, 'queue empty');
 
 my @fields = qw(apple orange grape); ++$APPLESTACK;
 for (my $i = 0; $i < @fields; ++$i ){
-	$stack->push('razzberry', field => $fields[$i]);
+	$stack->append('razzberry', field => $fields[$i]);
 	is_deeply($stack->{queue}, [ $razz->(@fields[0 .. $i ]) ], "queue has ${\($i + 1)}");
 }
 
 $stack->dequeue;
 
-$stack->push('razzberry', group => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
+$stack->append('razzberry', group => 'fruit'); ++$APPLESTACK; ++$FRUITSTACK;
 # want to test the resultant stacks...
-ok((grep { $_ } map { $stack->stack($_) } @fruits) == @fruits, 'stack foreach field in group');
+ok((grep { $_ } map { $stack->chain($_) } @fruits) == @fruits, 'stack foreach field in group');
 
 push(@fruits, 'strawberry');
 $stack->group(qw(fruit strawberry));
 $stack->dequeue;
-ok((grep { $_ } map { $stack->stack($_) } @fruits) == @fruits, 'stack foreach field in group');
+ok((grep { $_ } map { $stack->chain($_) } @fruits) == @fruits, 'stack foreach field in group');
 
-ok(@{$stack->stack('apple')->{chain}} == $APPLESTACK, 'apple stack has expected subs');
+ok(@{$stack->chain('apple')->{chain}} == $APPLESTACK, 'apple stack has expected subs');
 is($stack->transform('apple', 'pear'), ':-P :-P pearpear', 'transformed');
 is($filter, 'multi|no-op|razzberry|razzberry|', 'filter names');
 
 $filter = '';
-ok(@{$stack->stack('strawberry')->{chain}} == $FRUITSTACK, 'strawberry stack has expected subs w/o explicit push()');
+ok(@{$stack->chain('strawberry')->{chain}} == $FRUITSTACK, 'strawberry stack has expected subs w/o explicit append()');
 is($stack->transform('strawberry', 'pear'), ':-P pear', 'transformed');
 is($filter, 'no-op|razzberry|', 'filter names');
 
@@ -86,7 +86,7 @@ SKIP: {
 	eval "use $testwarn; 1";
 	skip "$testwarn required for testing warnings" if $@;
 
-	$stack->push('no-op', field => 'blue');
+	$stack->append('no-op', field => 'blue');
 	warning_is(sub { $stack->transform( 'blue',  'yellow' ) }, undef, 'no warning for specified field');
 	warning_is(sub { $stack->transform( 'green', 'orange' ) }, q/No transformations specified for 'green'/, 'warn single');
 	warning_is(sub { $stack->transform({'green', 'orange'}) }, undef, 'no warn multi');
