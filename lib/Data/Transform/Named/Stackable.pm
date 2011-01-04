@@ -16,14 +16,11 @@ use strict;
 use warnings;
 use Carp qw(croak carp);
 
-use Data::Transform::Named;
 use Object::Enum 0.072 ();
 use Set::DynamicGroups ();
 use Sub::Chain ();
 
 our %Enums = (
-	on_undef => Object::Enum->new({unset => 0, default => 'skip',
-		values => [qw(skip blank proceed)]}),
 	warn_no_field => Object::Enum->new({unset => 0, default => 'single',
 		values => [qw(never single always)]}),
 );
@@ -48,28 +45,6 @@ it may be easier to use L<Data::Transform::Named/stackable>.
 Possible options:
 
 =begin :list
-
-* I<named>
-An instance of Data::Transform::Named.
-A default (with all the functions from L<Data::Transform::Named::Common>)
-will be created if not supplied.
-
-* I<on_undef>
-What to do when a value is undefined.
-Valid values are:
-
-=begin :list
-
-* C<proceed> - proceed as normal (as if it was defined)
-
-* C<skip> - skip the transformation (don't call the sub)
-
-* C<blank> - initialize the value to a blank string
-
-=end :list
-
-The default is C<skip> since must functions likely expect
-some sort of value (like a string) to transform.
 
 * I<warn_no_field>
 Whether or not to emit a warning if asked to transform a field
