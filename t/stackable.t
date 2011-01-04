@@ -7,21 +7,13 @@ require_ok($mod);
 my $stack = $mod->new();
 isa_ok($stack, $mod);
 
-my $nmod = 'Data::Transform::Named';
-isa_ok($stack->{named}, $nmod);
-is_deeply($stack->{named}, $nmod->new->add_common, 'Named initialized correctly');
-
-$stack = $mod->new(named => $nmod->new);
-isa_ok($stack->{named}, $nmod);
-is_deeply($stack->{named}, $nmod->new, 'Named initialized correctly');
-
 my $filter;
 sub filter {
 	my ($name, $sub) = @_;
 	return ($name, sub { $filter .= "$name|"; &$sub(@_) });
 }
 
-$stack = $nmod->new->add(filter('no-op', sub { $_[0] }), filter('razzberry' => sub { ":-P $_[0]" }))->stackable;
+$stack = $mod->new(subs => {filter('no-op', sub { $_[0] }), filter('razzberry' => sub { ":-P $_[0]" })});
 isa_ok($stack, $mod);
 
 my @fruit1 = qw(apple orange kiwi);
