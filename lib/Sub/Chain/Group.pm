@@ -106,6 +106,11 @@ sub new {
 			exists $opts{$name} ? delete $opts{$name} : ()
 		);
 	};
+	# remove any other characters
+	$self->{chain_class} =~ s/[^:a-zA-Z0-9_]+//g;
+	eval "require $self->{chain_class}";
+
+	# TODO: warn about remaining unused options?
 
 	bless $self, $class;
 }
