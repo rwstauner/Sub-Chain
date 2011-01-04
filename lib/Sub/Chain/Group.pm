@@ -62,9 +62,9 @@ or, for example, include the C<subs> parameter
 if you're using L<Sub::Chain::Named>.
 
 * C<warn_no_field>
-Whether or not to emit a warning if asked to transform a field
-but transformations were not specified for that field
-(specifically when L</stack> is called and no stack exists).
+Whether or not to emit a warning if asked to call a sub chain on a field
+but no subs were specified for that field
+(specifically when L</chain> is called and no chain exists).
 Valid values are:
 
 =begin :list
@@ -75,8 +75,8 @@ Valid values are:
 
 =item *
 
-C<single> - warn when called for a single transformation
-(but not when L</transform> is called with a hashref or arrayref).
+C<single> - warn when called for a single field
+(but not when L</call> is used with a hashref or arrayref).
 
 =end :list
 
@@ -110,12 +110,12 @@ sub new {
 
 Process the queue of group and field specifications.
 
-Queuing allows you to specify a transformation
+Queuing allows you to specify subs
 for a group before you specify what fields belong in that group.
 
 This method is called when another method needs something
 from the chain and there are still specifications in the queue
-(like L</chain> and L</transform>, for instance).
+(like L</chain> and L</call>, for instance).
 
 =cut
 
@@ -260,11 +260,11 @@ sub _normalize_spec {
 
 =method append
 
-	$chain->push($name, %options); # or \%options
-	$chain->push(\&trim,  fields => [qw(fld1 fld2)]);
-	$chain->push(\&trim,  field  => 'col3', opts => {on_undef => 'blank'});
+	$chain->append($sub, %options); # or \%options
+	$chain->append(\&trim,  fields => [qw(fld1 fld2)]);
+	$chain->append(\&trim,  field  => 'col3', opts => {on_undef => 'blank'});
 	# or, if using Sub::Chain::Named
-	$chain->push('match', groups => 'group1', args => ['pattern']);
+	$chain->append('match', groups => 'group1', args => ['pattern']);
 
 Append a sub onto the chain
 for the specified fields and/or groups.
@@ -273,14 +273,14 @@ Possible options:
 
 =for :list
 * C<fields> (or C<field>)
-An arrayref of field names to transform
+An arrayref of field names
 * C<groups> (or C<group>)
-An arrayref of group names to transform
+An arrayref of group names
 * C<args> (or C<arguments>)
 An arrayref of arguments to pass to the sub
 (see L<Sub::Chain/append>)
 * C<opts> (or C<options>)
-A hashref of options for the chain
+A hashref of options for the sub
 (see L<Sub::Chain/OPTIONS>)
 
 If a single string is provided for C<fields> or C<groups>
@@ -337,30 +337,30 @@ sub chain {
 		return $chain;
 	}
 
-	carp("No transformations specified for '$name'")
+	carp("No subs chained specified for '$name'")
 		if ($self->{warn_no_field}->is_always)
 			|| ($self->{warn_no_field}->is_single && !$opts->{multi});
 
 	return undef;
 }
 
-=method transform
+=method call
 
-	my $values = $chain->transform({key => 'value', ...});
-	my $values = $chain->transform([qw(fields)], [qw(values)]);
-	my $value  = $chain->transform('address', '123 Street Road');
+	my $values = $chain->call({key => 'value', ...});
+	my $values = $chain->call([qw(fields)], [qw(values)]);
+	my $value  = $chain->call('address', '123 Street Road');
 
 Call the sub chain on the supplied data.
 
 If a sole hash ref is supplied
 it will be looped over
-and a hash ref of transformed data will be returned.
+and a hash ref of result data will be returned.
 For example:
 
 	# for use with DBI
 	$sth->execute;
 	while( my $hash = $sth->fetchrow_hashref() ){
-		my $tr_hash = $chain->call($hash);
+		my $new_hash = $chain->call($hash);
 	}
 
 If two array refs are supplied,
@@ -371,7 +371,7 @@ For example:
 	# for use with Text::CSV
 	my $header = $csv->getline($io);
 	while( my $array = $csv->getline($io) ){
-		my $tr_array = $chain->call($header, $array);
+		my $new_array = $chain->call($header, $array);
 	}
 
 If two arguments are given,
