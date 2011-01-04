@@ -251,8 +251,6 @@ sub _normalize_spec {
 	# simplify code later by initializing these to refs
 	$norm{args} ||= [];
 	$norm{opts} ||= {};
-	$norm{opts}->{on_undef} = $self->{on_undef}->clone(
-		exists $norm{opts}->{on_undef} ? $norm{opts}->{on_undef} : ());
 
 	return \%norm;
 }
