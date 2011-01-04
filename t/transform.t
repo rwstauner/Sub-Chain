@@ -4,7 +4,7 @@ use Test::More;
 
 my $mod = 'Sub::Chain::Group';
 require_ok($mod);
-my $stack = $mod->new(
+my $chain = $mod->new(
 	chain_class => 'Sub::Chain::Named',
 	chain_args  => {subs => {
 		'define' => sub { !defined $_[0] ? ' ~ ' : $_[0] },
@@ -12,11 +12,11 @@ my $stack = $mod->new(
 	}},
 );
 
-$stack->append('trim', fields => [qw(name address)]);
-$stack->append('squeeze', fields => 'name');
-$stack->append('exchange', fields => 'emotion', args => [{h => 'Happy'}]);
-$stack->append('define', fields => 'silly', opts => {on_undef => 'proceed'});
-$stack->append('no_undefs', fields => 'serious', opts => {on_undef => 'skip'});
+$chain->append('trim', fields => [qw(name address)]);
+$chain->append('squeeze', fields => 'name');
+$chain->append('exchange', fields => 'emotion', args => [{h => 'Happy'}]);
+$chain->append('define', fields => 'silly', opts => {on_undef => 'proceed'});
+$chain->append('no_undefs', fields => 'serious', opts => {on_undef => 'skip'});
 
 my $in = {
 	name => "\t Mr.   Blarh  ",
@@ -35,10 +35,10 @@ my $exp = {
 my @keys = keys %$in;
 
 foreach my $field ( @keys ){
-	is($stack->call($field, $in->{$field}), $exp->{$field}, "single value ($field) transformed");
+	is($chain->call($field, $in->{$field}), $exp->{$field}, "single value ($field) transformed");
 }
 
-is_deeply($stack->call($in), $exp, 'hash transformed');
-is_deeply($stack->call(\@keys, [@$in{@keys}]), [@$exp{@keys}], 'array transformed');
+is_deeply($chain->call($in), $exp, 'hash transformed');
+is_deeply($chain->call(\@keys, [@$in{@keys}]), [@$exp{@keys}], 'array transformed');
 
 done_testing;
