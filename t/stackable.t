@@ -33,7 +33,7 @@ is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruit1, 'group');
 $stack->group(fruit => \@fruit2);
 is_deeply($stack->groups->groups('fruit')->{fruit}, \@fruits, 'group');
 
-my $tr_ref = 'ARRAY';
+my $tr_ref = 'Sub::Chain';
 
 $stack->push('no-op', field => [qw(tree)]);
 isa_ok($stack->stack('tree'), $tr_ref);
@@ -78,12 +78,12 @@ $stack->group(qw(fruit strawberry));
 $stack->dequeue;
 ok((grep { $_ } map { $stack->stack($_) } @fruits) == @fruits, 'stack foreach field in group');
 
-ok(@{$stack->stack('apple')} == $APPLESTACK, 'apple stack has expected subs');
+ok(@{$stack->stack('apple')->{chain}} == $APPLESTACK, 'apple stack has expected subs');
 is($stack->transform('apple', 'pear'), ':-P :-P pearpear', 'transformed');
 is($filter, 'multi|no-op|razzberry|razzberry|', 'filter names');
 
 $filter = '';
-ok(@{$stack->stack('strawberry')} == $FRUITSTACK, 'strawberry stack has expected subs w/o explicit push()');
+ok(@{$stack->stack('strawberry')->{chain}} == $FRUITSTACK, 'strawberry stack has expected subs w/o explicit push()');
 is($stack->transform('strawberry', 'pear'), ':-P pear', 'transformed');
 is($filter, 'no-op|razzberry|', 'filter names');
 

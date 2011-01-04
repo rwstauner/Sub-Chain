@@ -19,6 +19,7 @@ use Carp qw(croak carp);
 use Data::Transform::Named;
 use Object::Enum 0.072 ();
 use Set::DynamicGroups ();
+use Sub::Chain ();
 
 our %Enums = (
 	on_undef => Object::Enum->new({unset => 0, default => 'skip',
@@ -155,8 +156,8 @@ sub dequeue {
 		# and copy its reference to the various stacks
 		my $sub = $self->{named}->transformer($tr, @$opts{qw(args opts)});
 		foreach my $field ( @$fields ){
-			CORE::push(@{ $self->{fields}->{$field} ||= [] },
-				[$sub, @$opts{qw(args opts)}]);
+			($self->{fields}->{$field} ||= Sub::Chain->new())
+				->push($sub, @$opts{qw(args opts)});
 		}
 	}
 	# let 'queue' return false so we can do simple 'if queue' checks
@@ -442,16 +443,7 @@ sub _transform_one {
 	my ($self, $field, $value, $opts) = @_;
 	return $value
 		unless my $stack = $self->stack($field, $opts);
-	foreach my $tr ( @$stack ){
-		my ($sub, $args, $opts) = @$tr;
-		if( !defined($value) ){
-			next if $opts->{on_undef}->is_skip;
-			$value = ''
-				if $opts->{on_undef}->is_blank;
-		}
-		$value = $sub->($value, @$args);
-	}
-	return $value;
+	return $stack->call($value);
 }
 
 1;
