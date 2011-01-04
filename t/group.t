@@ -7,13 +7,14 @@ require_ok($mod);
 my $chain = $mod->new();
 isa_ok($chain, $mod);
 
-my $filter;
+my $filter = '';
 sub filter {
 	my ($name, $sub) = @_;
 	return ($name, sub { $filter .= "$name|"; &$sub(@_) });
 }
 
-$chain = $mod->new(subs => {filter('no-op', sub { $_[0] }), filter('razzberry' => sub { ":-P $_[0]" })});
+$chain = $mod->new(chain_class => 'Sub::Chain::Named',
+	chain_args => {subs => {filter('no-op', sub { $_[0] }), filter('razzberry' => sub { ":-P $_[0]" })}});
 isa_ok($chain, $mod);
 
 my @fruit1 = qw(apple orange kiwi);
@@ -30,8 +31,12 @@ my $tr_ref = 'Sub::Chain';
 $chain->append('no-op', field => [qw(tree)]);
 isa_ok($chain->chain('tree'), $tr_ref);
 
-$chain->{named}->add(filter('multi' => sub { $_[0] x $_[1] }));
-is($chain->{named}{named}{multi}->('boo', 2), 'booboo', 'test func');
+# white box hacks to test functions
+{
+	my ($k, $v) = filter('multi' => sub { $_[0] x $_[1] });
+	$chain->{chain_args}{subs}{$k} = $v;
+}
+is($chain->{chain_args}{subs}{multi}->('boo', 2), 'booboo', 'test func');
 $filter = '';
 
 my $APPLECHAIN; # increment APPLECHAIN for each transformation to 'apple' field; we'll test later
@@ -45,7 +50,7 @@ is_deeply($chain->chain('orange'), $chain->chain('grape'), 'two chains from one 
 
 # white box testing for the queue
 
-my $razz = sub { map { ['razzberry', {fields => [ ref $_ ? @$_ : $_ ], args => [], opts => {on_undef => 'skip'}}] } @_ };
+my $razz = sub { map { ['razzberry', {fields => [ ref $_ ? @$_ : $_ ], args => [], opts => {}}] } @_ };
 
 is($chain->{queue}, undef, 'queue empty');
 $chain->append('razzberry', field => 'tree');
@@ -71,15 +76,13 @@ $chain->dequeue;
 ok((grep { $_ } map { $chain->chain($_) } @fruits) == @fruits, 'chain foreach field in group');
 
 ok(@{$chain->chain('apple')->{chain}} == $APPLECHAIN, 'apple chain has expected subs');
-is($chain->transform('apple', 'pear'), ':-P :-P pearpear', 'transformed');
+is($chain->call('apple', 'pear'), ':-P :-P pearpear', 'transformed');
 is($filter, 'multi|no-op|razzberry|razzberry|', 'filter names');
 
 $filter = '';
 ok(@{$chain->chain('strawberry')->{chain}} == $FRUITCHAIN, 'strawberry chain has expected subs w/o explicit append()');
-is($chain->transform('strawberry', 'pear'), ':-P pear', 'transformed');
+is($chain->call('strawberry', 'pear'), ':-P pear', 'transformed');
 is($filter, 'no-op|razzberry|', 'filter names');
-
-# transform() tested elsewhere
 
 SKIP: {
 	my $testwarn = 'Test::Warn';
@@ -87,16 +90,16 @@ SKIP: {
 	skip "$testwarn required for testing warnings" if $@;
 
 	$chain->append('no-op', field => 'blue');
-	warning_is(sub { $chain->transform( 'blue',  'yellow' ) }, undef, 'no warning for specified field');
-	warning_is(sub { $chain->transform( 'green', 'orange' ) }, q/No transformations specified for 'green'/, 'warn single');
-	warning_is(sub { $chain->transform({'green', 'orange'}) }, undef, 'no warn multi');
+	warning_is(sub { $chain->call( 'blue',  'yellow' ) }, undef, 'no warning for specified field');
+	warning_is(sub { $chain->call( 'green', 'orange' ) }, q/No subs chained for 'green'/, 'warn single');
+	warning_is(sub { $chain->call({'green', 'orange'}) }, undef, 'no warn multi');
 
 	no strict 'refs';
 	my %enums = %{"${mod}::Enums"};
 	$chain->{warn_no_field} = $enums{warn_no_field}->clone('always');
-	warning_is(sub { $chain->transform({'green', 'orange'}) }, q/No transformations specified for 'green'/, 'warn always');
+	warning_is(sub { $chain->call({'green', 'orange'}) }, q/No subs chained for 'green'/, 'warn always');
 	$chain->{warn_no_field} = $enums{warn_no_field}->clone('never');
-	warning_is(sub { $chain->transform( 'green', 'orange' ) }, undef, 'warn never');
+	warning_is(sub { $chain->call( 'green', 'orange' ) }, undef, 'warn never');
 }
 
 {
