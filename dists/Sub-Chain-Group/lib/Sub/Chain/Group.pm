@@ -115,6 +115,163 @@ sub new {
 	bless $self, $class;
 }
 
+=method append
+
+	$chain->append($sub, %options); # or \%options
+	$chain->append(\&trim,  fields => [qw(fld1 fld2)]);
+	$chain->append(\&trim,  field  => 'col3', opts => {on_undef => 'blank'});
+	# or, if using Sub::Chain::Named
+	$chain->append('match', groups => 'group1', args => ['pattern']);
+
+Append a sub onto the chain
+for the specified fields and/or groups.
+
+Possible options:
+
+=for :list
+* C<fields> (or C<field>)
+An arrayref of field names
+* C<groups> (or C<group>)
+An arrayref of group names
+* C<args> (or C<arguments>)
+An arrayref of arguments to pass to the sub
+(see L<Sub::Chain/append>)
+* C<opts> (or C<options>)
+A hashref of options for the sub
+(see L<Sub::Chain/OPTIONS>)
+
+If a single string is provided for C<fields> or C<groups>
+it will be converted to an arrayref.
+
+=cut
+
+sub append {
+	my ($self, $sub) = (shift, shift);
+	my %opts = ref $_[0] ? %{$_[0]} : @_;
+
+	CORE::push(@{ $self->{queue} ||= [] },
+		[$sub, $self->_normalize_spec(\%opts)]);
+
+	return $self;
+}
+
+=method call
+
+	my $values = $chain->call({key => 'value', ...});
+	my $values = $chain->call([qw(fields)], [qw(values)]);
+	my $value  = $chain->call('address', '123 Street Road');
+
+Call the sub chain appropriate for each field of the supplied data.
+
+The input (and output) can be one of the following:
+
+=begin :list
+
+* hashref => hashref
+If a sole hash ref is supplied
+it will be looped over
+and a hash ref of result data will be returned.
+For example:
+
+	# for use with DBI
+	$sth->execute;
+	while( my $hash = $sth->fetchrow_hashref() ){
+		my $new_hash = $chain->call($hash);
+	}
+
+* arrayref => arrayref
+If two array refs are supplied,
+the first should be a list of field names,
+and the second the corresponding data.
+For example:
+
+	# for use with Text::CSV
+	my $header = $csv->getline($io);
+	while( my $array = $csv->getline($io) ){
+		my $new_array = $chain->call($header, $array);
+	}
+
+* string, scalar => scalar
+If two arguments are given,
+and the first is a string,
+it should be the field name,
+and the second argument the data.
+The return value will be the data after it has been
+passed through the chain.
+
+	# simple data
+	my $trimmed = $chain->call('spaced', '  lots of space   ');
+
+=end :list
+
+=cut
+
+sub call {
+	my ($self) = shift;
+
+	$self->dequeue
+		if $self->{queue};
+
+	my $out;
+	my $opts = {multi => 1};
+	my $ref = ref $_[0];
+
+	if( $ref eq 'HASH' ){
+		my %in = %{$_[0]};
+		$out = {};
+		while( my ($key, $value) = each %in ){
+			$out->{$key} = $self->_call_one($key, $value, $opts);
+		}
+	}
+	elsif( $ref eq 'ARRAY' ){
+		my @fields = @{$_[0]};
+		my @data   = @{$_[1]};
+		$out = [];
+		foreach my $i ( 0 .. $#fields ){
+			CORE::push(@$out,
+				$self->_call_one($fields[$i], $data[$i], $opts));
+		}
+	}
+	else {
+		$out = $self->_call_one($_[0], $_[1]);
+	}
+
+	return $out;
+}
+
+sub _call_one {
+	my ($self, $field, $value, $opts) = @_;
+	return $value
+		unless my $chain = $self->chain($field, $opts);
+	return $chain->call($value);
+}
+
+=method chain
+
+	$chain->chain($field);
+
+Return the sub chain for the given field name.
+
+=cut
+
+sub chain {
+	my ($self, $name, $opts) = @_;
+	$opts ||= {};
+
+	$self->dequeue
+		if $self->{queue};
+
+	if( my $chain = $self->{fields}{$name} ){
+		return $chain;
+	}
+
+	carp("No subs chained for '$name'")
+		if ($self->{warn_no_field}->is_always)
+			|| ($self->{warn_no_field}->is_single && !$opts->{multi});
+
+	return undef;
+}
+
 =method dequeue
 
 Process the queue of group and field specifications.
@@ -281,46 +438,6 @@ sub _normalize_spec {
 	return \%norm;
 }
 
-=method append
-
-	$chain->append($sub, %options); # or \%options
-	$chain->append(\&trim,  fields => [qw(fld1 fld2)]);
-	$chain->append(\&trim,  field  => 'col3', opts => {on_undef => 'blank'});
-	# or, if using Sub::Chain::Named
-	$chain->append('match', groups => 'group1', args => ['pattern']);
-
-Append a sub onto the chain
-for the specified fields and/or groups.
-
-Possible options:
-
-=for :list
-* C<fields> (or C<field>)
-An arrayref of field names
-* C<groups> (or C<group>)
-An arrayref of group names
-* C<args> (or C<arguments>)
-An arrayref of arguments to pass to the sub
-(see L<Sub::Chain/append>)
-* C<opts> (or C<options>)
-A hashref of options for the sub
-(see L<Sub::Chain/OPTIONS>)
-
-If a single string is provided for C<fields> or C<groups>
-it will be converted to an arrayref.
-
-=cut
-
-sub append {
-	my ($self, $sub) = (shift, shift);
-	my %opts = ref $_[0] ? %{$_[0]} : @_;
-
-	CORE::push(@{ $self->{queue} ||= [] },
-		[$sub, $self->_normalize_spec(\%opts)]);
-
-	return $self;
-}
-
 =method reprocess_queue
 
 Force the queue of chain specifications
@@ -339,123 +456,6 @@ sub reprocess_queue {
 	$self->{queue}  = [@$dequeued, @{ $self->{queue} || [] } ];
 	$self->{fields} = {};
 	# but don't actually rebuild it until necessary
-}
-
-=method chain
-
-	$chain->chain($field);
-
-Return the sub chain for the given field name.
-
-=cut
-
-sub chain {
-	my ($self, $name, $opts) = @_;
-	$opts ||= {};
-
-	$self->dequeue
-		if $self->{queue};
-
-	if( my $chain = $self->{fields}{$name} ){
-		return $chain;
-	}
-
-	carp("No subs chained for '$name'")
-		if ($self->{warn_no_field}->is_always)
-			|| ($self->{warn_no_field}->is_single && !$opts->{multi});
-
-	return undef;
-}
-
-=method call
-
-	my $values = $chain->call({key => 'value', ...});
-	my $values = $chain->call([qw(fields)], [qw(values)]);
-	my $value  = $chain->call('address', '123 Street Road');
-
-Call the sub chain appropriate for each field of the supplied data.
-
-The input (and output) can be one of the following:
-
-=begin :list
-
-* hashref => hashref
-If a sole hash ref is supplied
-it will be looped over
-and a hash ref of result data will be returned.
-For example:
-
-	# for use with DBI
-	$sth->execute;
-	while( my $hash = $sth->fetchrow_hashref() ){
-		my $new_hash = $chain->call($hash);
-	}
-
-* arrayref => arrayref
-If two array refs are supplied,
-the first should be a list of field names,
-and the second the corresponding data.
-For example:
-
-	# for use with Text::CSV
-	my $header = $csv->getline($io);
-	while( my $array = $csv->getline($io) ){
-		my $new_array = $chain->call($header, $array);
-	}
-
-* string, scalar => scalar
-If two arguments are given,
-and the first is a string,
-it should be the field name,
-and the second argument the data.
-The return value will be the data after it has been
-passed through the chain.
-
-	# simple data
-	my $trimmed = $chain->call('spaced', '  lots of space   ');
-
-=end :list
-
-=cut
-
-sub call {
-	my ($self) = shift;
-
-	$self->dequeue
-		if $self->{queue};
-
-	my $out;
-	my $opts = {multi => 1};
-	my $ref = ref $_[0];
-
-	if( $ref eq 'HASH' ){
-		my %in = %{$_[0]};
-		$out = {};
-		while( my ($key, $value) = each %in ){
-			$out->{$key} = $self->_call_one($key, $value, $opts);
-		}
-	}
-	elsif( $ref eq 'ARRAY' ){
-		my @fields = @{$_[0]};
-		my @data   = @{$_[1]};
-		$out = [];
-		foreach my $i ( 0 .. $#fields ){
-			CORE::push(@$out,
-				$self->_call_one($fields[$i], $data[$i], $opts));
-		}
-	}
-	else {
-		$out = $self->_call_one($_[0], $_[1]);
-	}
-
-	return $out;
-}
-
-sub _call_one {
-	my ($self, $field, $value, $opts) = @_;
-	return $value
-		unless my $chain = $self->chain($field, $opts);
-	return $chain->call($value);
 }
 
 1;
