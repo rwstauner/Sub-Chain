@@ -170,7 +170,7 @@ sub dequeue {
 	$chain->fields(@fields);
 
 Add fields to the list of all known fields.
-This tells the object which fields are available/expected
+This tells the object which fields are available or expected
 which can be useful for specifying groups based on exclusions.
 
 For example:
