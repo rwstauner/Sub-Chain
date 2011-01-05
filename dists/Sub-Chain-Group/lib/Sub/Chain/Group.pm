@@ -219,6 +219,8 @@ sub group {
 
 =method groups
 
+	my $set_dg = $chain->groups();
+
 Return the object's instance of L<Set::DynamicGroups>.
 
 This can be useful if you need more advanced manipulation
