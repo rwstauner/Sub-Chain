@@ -44,7 +44,7 @@ our %Enums = (
 	my $chain = Sub::Chain::Group->new(%opts);
 
 	my $chain = Sub::Chain::Group->new(
-		chain_class => 'Sub::Chain::Group',
+		chain_class => 'Sub::Chain::Named',
 		chain_args  => {subs => {happy => sub { ":-P" } } },
 	);
 
