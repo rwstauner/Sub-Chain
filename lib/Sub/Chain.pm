@@ -203,7 +203,7 @@ chaining multiple subs (coderefs) together
 and executing them one after the other in a single call.
 
 It was specifically designed to be built dynamically
-from on a list of specifications provided at runtime
+from a list of specifications provided at runtime
 to filter data through the specified list of functions.
 
 Also see L<Sub::Chain::Named>
@@ -309,7 +309,7 @@ and just rename it and abstract it a bit further.
 
 I also looked into L<Rule::Engine> which was beginning development
 at the time I was searching.
-However, like L<Data::Transform>, seemed more complex than what I needed.
+However, like L<Data::Transform>, it seemed more complex than what I needed.
 When I saw that L<Rule::Engine> was using [the very excellent] L<Moose>
 I decided to pass since I was doing work on a number of very old machines
 with old distros and old perls and constrained resources.
