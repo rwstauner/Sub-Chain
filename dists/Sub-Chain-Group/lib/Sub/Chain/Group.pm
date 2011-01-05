@@ -373,8 +373,13 @@ sub chain {
 	my $values = $chain->call([qw(fields)], [qw(values)]);
 	my $value  = $chain->call('address', '123 Street Road');
 
-Call the sub chain on the supplied data.
+Call the sub chain appropriate for each field of the supplied data.
 
+The input (and output) can be one of the following:
+
+=begin :list
+
+* hashref => hashref
 If a sole hash ref is supplied
 it will be looped over
 and a hash ref of result data will be returned.
@@ -386,6 +391,7 @@ For example:
 		my $new_hash = $chain->call($hash);
 	}
 
+* arrayref => arrayref
 If two array refs are supplied,
 the first should be a list of field names,
 and the second the corresponding data.
@@ -397,6 +403,7 @@ For example:
 		my $new_array = $chain->call($header, $array);
 	}
 
+* string, scalar => scalar
 If two arguments are given,
 and the first is a string,
 it should be the field name,
@@ -406,6 +413,8 @@ passed through the chain.
 
 	# simple data
 	my $trimmed = $chain->call('spaced', '  lots of space   ');
+
+=end :list
 
 =cut
 
