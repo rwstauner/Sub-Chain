@@ -16,8 +16,8 @@ sub one   { 1 }
 sub two   { 2 }
 sub three { 3 }
 
-$named->name_sub(one => \&one);
-is_deeply($named->{named}, {tongue => $sub, one => \&one}, 'got named sub through name_sub()');
+$named->name_subs(one => \&one);
+is_deeply($named->{named}, {tongue => $sub, one => \&one}, 'got named sub through name_subs()');
 $named->name_subs(two => \&two, three => \&three);
 is_deeply($named->{named}, {tongue => $sub, one => \&one, two => \&two, three => \&three}, 'got named subs through name_subs()');
 
@@ -28,7 +28,7 @@ is($named->(4), '1', 'got expected (last) value');
 $named->append('three');
 is($named->(4), '3', 'got expected (last) value');
 
-$named->name_sub({times2 => sub { $_[0] * 2 }});
+$named->name_subs({times2 => sub { $_[0] * 2 }});
 is($named->call(8), 3, 'defined sub not added to stack');
 $named->append('times2');
 is($named->call(8), 6, 'chained values');

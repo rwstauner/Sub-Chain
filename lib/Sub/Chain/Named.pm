@@ -65,7 +65,6 @@ sub append {
 }
 
 =method name_subs
-X<name_sub>
 
 	$named->name_subs(goober => \&peant_butter);
 
@@ -85,8 +84,6 @@ sub name_subs {
 	# chainable
 	return $self;
 }
-# alias to avoid typos based on singular (rather than plural) arguments
-*name_sub = \&name_subs;
 
 1;
 
