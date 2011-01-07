@@ -315,6 +315,12 @@ I decided to pass since I was doing work on a number of very old machines
 with old distros and old perls and constrained resources.
 Again, it just seemed to be much more than what I was looking for.
 
+=head1 TODO
+
+=for :list
+* Write a lot more tests
+* Improve documentation
+
 =head1 SEE ALSO
 
 =for :list
@@ -327,4 +333,4 @@ Again, it just seemed to be much more than what I was looking for.
 
 # TODO: link to questions on perlmonks and stackoverflow?
 
-=for stopwords distros
+=for stopwords distros TODO
