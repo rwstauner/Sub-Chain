@@ -470,6 +470,12 @@ In addition to calling different L<Sub::Chain>s on specified fields
 It uses L<Set::DynamicGroups> to allow you to build sub chains
 for dynamic groups of fields.
 
+=for stopwords TODO
+
+=head1 TODO
+
+See L<Sub::Chain/TODO>.
+
 =head1 SEE ALSO
 
 =for :list
