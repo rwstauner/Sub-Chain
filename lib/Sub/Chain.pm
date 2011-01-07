@@ -11,7 +11,7 @@ package Sub::Chain;
 
 	my @clean_laundry = $chain->call(@clothes);
 
-	# if only it were that simple
+	# if only it were that easy
 
 =cut
 
