@@ -5,9 +5,9 @@ package Sub::Chain;
 
 	my $chain = Sub::Chain->new();
 
-	$chain->push(\&wash, ['cold']);
-	$chain->push(\&dry,  [{tumble => 'low'}]);
-	$chain->push(\&fold);
+	$chain->append(\&wash, ['cold']);
+	$chain->append(\&dry,  [{tumble => 'low'}]);
+	$chain->append(\&fold);
 
 	my @clean_laundry = $chain->call(@clothes);
 
