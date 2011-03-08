@@ -1,13 +1,13 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More 0.96;
 
 my $mod = 'Sub::Chain';
-require_ok($mod);
+eval "require $mod" or die $@;
 
 {
 	# example from L<Sub::Chain/append>
-	my $chain = $mod->new;
+	my $chain = new_ok($mod);
 	sub sum { my $s = 0; $s += $_ for @_; $s; }
 	$chain->append(\&sum, [3, 4]);
 	is($chain->call(1, 2), 10, 'example from POD correct');
@@ -16,14 +16,14 @@ require_ok($mod);
 
 	# extra tests:
 	is($chain->call(), 7, 'only predefined arguments');
-	$chain = $mod->new->append(\&sum);
+	$chain = new_ok($mod)->append(\&sum);
 	is($chain->call(2, 1), 3, 'only sent arguments');
 	is($chain->call(), 0, 'no arguments');
 }
 
 {
 	# example from L<Sub::Chain/OPTIONS>
-	my $chain = $mod->new;
+	my $chain = new_ok($mod);
 	sub add_uc { $_[0] . ' ' . uc $_[0]  }
 	sub repeat { $_[0] x $_[1] }
 	my $s = 'hi';

@@ -1,15 +1,13 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More 0.96;
 
 my $mod = 'Sub::Chain::Named';
-require_ok($mod);
+eval "require $mod" or die $@;
 
 my $sub = sub { ":-P" };
-my $named = $mod->new;
-isa_ok($named, $mod);
-$named = $mod->new(subs => {tongue => $sub});
-isa_ok($named, $mod);
+my $named = new_ok($mod, [], 'no args');
+   $named = new_ok($mod, [subs => {tongue => $sub}]);
 is_deeply($named->{named}, {tongue => $sub}, 'got named sub through new()');
 
 sub one   { 1 }
