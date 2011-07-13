@@ -1,9 +1,9 @@
+use strict;
+use warnings;
+
 package Sub::Chain;
 # ABSTRACT: Chain subs together and call in succession
 
-
-use strict;
-use warnings;
 use Carp qw(croak carp);
 
 # enable object to be called like a coderef

@@ -1,9 +1,9 @@
+use strict;
+use warnings;
+
 package Sub::Chain::Named;
 # ABSTRACT: subclass of Sub::Chain with named subs
 
-
-use strict;
-use warnings;
 use Carp qw(croak);
 use Sub::Chain;
 our @ISA = qw(Sub::Chain);
