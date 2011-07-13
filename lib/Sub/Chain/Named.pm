@@ -1,3 +1,4 @@
+# vim: set ts=2 sts=2 sw=2 expandtab smarttab:
 use strict;
 use warnings;
 
@@ -10,11 +11,11 @@ our @ISA = qw(Sub::Chain);
 
 =method new
 
-	my $chain = Sub::Chain::Named->new(
-		subs => {
-			action => sub {},
-		}
-	);
+  my $chain = Sub::Chain::Named->new(
+    subs => {
+      action => sub {},
+    }
+  );
 
 Instantiate a L<Sub::Chain> instance
 with a collection of named subs.
@@ -27,20 +28,20 @@ See L<Sub::Chain/new> for more information.
 =cut
 
 sub new {
-	my $class = shift;
-	my %opts = ref $_[0] ? %{$_[0]} : @_;
-	my $subs = delete $opts{subs};
+  my $class = shift;
+  my %opts = ref $_[0] ? %{$_[0]} : @_;
+  my $subs = delete $opts{subs};
 
-	my $self = $class->SUPER::new(%opts);
-	$self->{named} = $subs || {};
+  my $self = $class->SUPER::new(%opts);
+  $self->{named} = $subs || {};
 
-	return $self;
+  return $self;
 }
 
 =method append
 
-	$named->append($sub_name);
-	$named->append($sub_name, \@args, \%opts);
+  $named->append($sub_name);
+  $named->append($sub_name, \@args, \%opts);
 
 Just like L<Sub::Chain/append>
 except that C<$sub_name> is a string
@@ -50,15 +51,15 @@ and then passed to L<Sub::Chain/append>.
 =cut
 
 sub append {
-	my ($self, $name, @append) = @_;
-	my $sub = $self->{named}{$name}
-		or croak("No sub defined for name: $name");
-	$self->SUPER::append($sub, @append);
+  my ($self, $name, @append) = @_;
+  my $sub = $self->{named}{$name}
+    or croak("No sub defined for name: $name");
+  $self->SUPER::append($sub, @append);
 }
 
 =method name_subs
 
-	$named->name_subs(goober => \&peant_butter);
+  $named->name_subs(goober => \&peant_butter);
 
 Add named subs to the collection.
 Takes a hash (or hashref),
@@ -67,14 +68,14 @@ or just a single name and a value (a small hash).
 =cut
 
 sub name_subs {
-	my ($self) = shift;
-	my %subs = ref $_[0] ? %{$_[0]} : @_;
+  my ($self) = shift;
+  my %subs = ref $_[0] ? %{$_[0]} : @_;
 
-	# TODO: warn if already exists?
-	@{ $self->{named} }{keys %subs} = values %subs;
+  # TODO: warn if already exists?
+  @{ $self->{named} }{keys %subs} = values %subs;
 
-	# chainable
-	return $self;
+  # chainable
+  return $self;
 }
 
 1;
