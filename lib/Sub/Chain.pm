@@ -1,19 +1,6 @@
 package Sub::Chain;
 # ABSTRACT: Chain subs together and call in succession
 
-=head1 SYNOPSIS
-
-	my $chain = Sub::Chain->new();
-
-	$chain->append(\&wash, ['cold']);
-	$chain->append(\&dry,  [{tumble => 'low'}]);
-	$chain->append(\&fold);
-
-	my @clean_laundry = $chain->call(@clothes);
-
-	# if only it were that easy
-
-=cut
 
 use strict;
 use warnings;
@@ -195,6 +182,21 @@ sub _copy_enums {
 1;
 
 =for stopwords runtime
+
+=for test_synopsis
+my @clothes;
+
+=head1 SYNOPSIS
+
+  my $chain = Sub::Chain->new();
+
+  $chain->append(\&wash, ['cold']);
+  $chain->append(\&dry,  [{tumble => 'low'}]);
+  $chain->append(\&fold);
+
+  my @clean_laundry = $chain->call(@clothes);
+
+  # if only it were that easy
 
 =head1 DESCRIPTION
 

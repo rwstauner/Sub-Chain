@@ -1,14 +1,6 @@
 package Sub::Chain::Named;
 # ABSTRACT: subclass of Sub::Chain with named subs
 
-=head1 SYNOPSIS
-
-	my $chain = Sub::Chain::Named->new(subs => {name1 => \&sub1});
-	$chain->name_subs(name2 => \&sub2, name3 => \&sub3);
-	...
-	$chain->append($name, \@args, \%opts);
-
-=cut
 
 use strict;
 use warnings;
@@ -86,6 +78,18 @@ sub name_subs {
 }
 
 1;
+
+=for test_synopsis
+my ($name, @args, %opts);
+
+=head1 SYNOPSIS
+
+  my $chain = Sub::Chain::Named->new(subs => {name1 => \&sub1});
+  $chain->name_subs(name2 => \&sub2, name3 => \&sub3);
+
+  # ...
+
+  $chain->append($name, \@args, \%opts);
 
 =head1 DESCRIPTION
 
